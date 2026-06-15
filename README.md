@@ -16,7 +16,8 @@ You need a C++17 compliant compiler and CMake (3.10+).
 
 Depending on your operating system, you will need the corresponding FUSE libraries:
 - **Windows**: [WinFSP](https://winfsp.dev/) and a MinGW-w64 toolchain (e.g., MSYS2 UCRT64).
-- **macOS**: [macFUSE](https://osxfuse.github.io/) (`brew install macfuse`).
+- **macOS**: [macFUSE](https://osxfuse.github.io/) (`brew install --cask macfuse`). 
+  > **Important**: macFUSE requires installing a system extension. After installation, open **System Settings > Privacy & Security**, allow the extension, and restart your Mac. On Apple Silicon Macs, you must first boot into Recovery Mode to change your security policy to "Reduced Security" and allow user management of kernel extensions.
 - **Linux**: `libfuse-dev` (`sudo apt install libfuse-dev pkg-config`).
 
 ## Build Instructions

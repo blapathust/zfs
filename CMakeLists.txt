@@ -32,6 +32,7 @@ set(CORE_SOURCES
 
 # If FUSE is found, build the FUSE wrapper
 if(FUSE_FOUND)
+    add_definitions(-D_FILE_OFFSET_BITS=64)
     include_directories(${FUSE_INCLUDE_DIRS})
     add_executable(zfslite src/fuse_layer.cpp ${CORE_SOURCES})
     target_link_libraries(zfslite ${FUSE_LIBRARIES})

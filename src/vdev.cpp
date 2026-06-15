@@ -81,6 +81,8 @@ void VDev::sync() {
     if (fd >= 0) {
 #ifdef _WIN32
         _commit(fd);
+#elif defined(__APPLE__)
+        fcntl(fd, F_FULLFSYNC);
 #else
         fdatasync(fd);
 #endif

@@ -43,9 +43,15 @@ static int zfsl_getattr(const char *path, zfsl_stat_t *stbuf) {
         stbuf->st_uid = ctx ? ctx->uid : st.st_uid;
         stbuf->st_gid = ctx ? ctx->gid : st.st_gid;
         
+#ifdef __APPLE__
+        stbuf->st_atimespec.tv_sec = st.st_atime;
+        stbuf->st_mtimespec.tv_sec = st.st_mtime;
+        stbuf->st_ctimespec.tv_sec = st.st_ctime;
+#else
         stbuf->st_atim.tv_sec = st.st_atime;
         stbuf->st_mtim.tv_sec = st.st_mtime;
         stbuf->st_ctim.tv_sec = st.st_ctime;
+#endif
     }
     return res;
 }
