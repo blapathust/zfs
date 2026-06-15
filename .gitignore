@@ -1,0 +1,19 @@
+# Build artifacts
+build/
+*.o
+*.exe
+*.out
+
+# Virtual disk images
+*.img
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS junk
+.DS_Store
+Thumbs.db
