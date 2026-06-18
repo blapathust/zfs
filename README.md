@@ -34,7 +34,7 @@ Compile the project:
 make  # On Windows, use: mingw32-make
 ```
 
-This will produce several executables, including the main FUSE driver `zfslite` and an evaluation script `eval_zfs`.
+This will produce the evaluation script `eval_zfs` and unit tests. If FUSE libraries are installed (WinFSP, macFUSE, or libfuse), the main FUSE driver `zfslite` will also be built.
 
 ## Tutorial / Walkthrough
 

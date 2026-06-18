@@ -58,7 +58,10 @@ bool VDev::read_block(uint64_t blk_no, void* buffer) {
         std::cerr << "[vdev] read_block failed: fd=" << fd << " blk_no=" << blk_no << " total=" << total_blocks << std::endl;
         return false;
     }
-    lseek(fd, blk_no * VDEV_BLOCK_SIZE, SEEK_SET);
+    if (lseek(fd, blk_no * VDEV_BLOCK_SIZE, SEEK_SET) < 0) {
+        std::cerr << "[vdev] read_block lseek failed: " << strerror(errno) << std::endl;
+        return false;
+    }
     int ret = ::read(fd, buffer, VDEV_BLOCK_SIZE);
     if (ret != VDEV_BLOCK_SIZE) {
         std::cerr << "[vdev] read_block failed: ::read returned " << ret << " errno=" << strerror(errno) << std::endl;
@@ -69,7 +72,10 @@ bool VDev::read_block(uint64_t blk_no, void* buffer) {
 
 bool VDev::write_block(uint64_t blk_no, const void* buffer) {
     if (fd < 0 || blk_no >= total_blocks) return false;
-    lseek(fd, blk_no * VDEV_BLOCK_SIZE, SEEK_SET);
+    if (lseek(fd, blk_no * VDEV_BLOCK_SIZE, SEEK_SET) < 0) {
+        std::cerr << "[vdev] write_block lseek failed: " << strerror(errno) << std::endl;
+        return false;
+    }
     return ::write(fd, buffer, VDEV_BLOCK_SIZE) == VDEV_BLOCK_SIZE;
 }
 

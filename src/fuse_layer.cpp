@@ -216,5 +216,7 @@ int main(int argc, char *argv[]) {
     int ret = fuse_main(fuse_argc, fuse_argv, &zfsl_oper, NULL);
     
     delete[] fuse_argv;
+    delete zfs;
+    zfs = nullptr;
     return ret;
 }

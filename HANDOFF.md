@@ -13,18 +13,16 @@ zfs/
 ├── .gitignore
 ├── HANDOFF.md              # This file
 ├── src/
-│   ├── main.cpp            # FUSE entry point (requires FUSE headers to compile)
+│   ├── fuse_layer.cpp      # FUSE entry point with mutex, all callbacks (requires FUSE headers)
 │   ├── zfs.h / zfs.cpp     # Core FS engine: CoW, Merkle, snapshots, CRUD
 │   ├── zfs_structures.h    # On-disk packed structs (uberblock, dnode, dirent, blkptr)
 │   ├── vdev.h / vdev.cpp   # Virtual block device (4KB block I/O over .img file)
-│   ├── allocator.h / .cpp  # Persistent bitmap block allocator
+│   ├── allocator.h / .cpp  # Persistent refcount-based block allocator
 │   └── sha256.h / sha256.cpp  # Standalone SHA-256 implementation
 └── tests/
     ├── eval.cpp             # Comprehensive evaluation (no FUSE needed)
     ├── test_vdev.cpp        # Unit test: VDev read/write
-    ├── test_allocator.cpp   # Unit test: bitmap allocator
-    ├── debug_multiblock.cpp # Debug helper (can be deleted)
-    └── sizeof_test.cpp      # Struct size checker (can be deleted)
+    └── test_allocator.cpp   # Unit test: bitmap allocator
 ```
 
 ## How to Build & Run
@@ -59,19 +57,23 @@ mingw32-make
 The multi-block CoW propagation bug has been successfully resolved. 
 - **Deferred Freeing:** Block freeing during `cow_propagate` is now deferred until all new block allocations for that CoW pass are complete. This prevents the allocator from recycling a block that was just freed for a different dnode/dirent in the same propagation path.
 - **Windows Binary I/O:** Added `O_BINARY` to `::open` in `vdev.cpp` to prevent text-mode translation (e.g. `\n` to `\r\n`) from corrupting binary block reads/writes on Windows platforms.
+- **Rename Overwrite Fix:** `rename` now correctly re-resolves both source and destination parent directories after an `unlink` overwrite, preventing stale CoW pointers.
+- **ENOSPC Safety:** All `alloc_block()` callers now check for a 0 return and propagate `-ENOSPC` instead of silently corrupting the uberblock.
+- **VDev lseek Checks:** `read_block` and `write_block` now validate `lseek()` return values.
+- **FUSE Cleanup:** The FUSE driver now properly cleans up the ZFS instance on exit.
 
 ### What works (verified by eval)
 - ✅ VDev block I/O (format, open, read_block, write_block)
-- ✅ Bitmap block allocator (alloc, free, persist)
+- ✅ Refcount-based block allocator (alloc, free, persist)
 - ✅ File create with duplicate name rejection
 - ✅ Single-block and **Multi-block** write/read with Merkle hash verification
 - ✅ Corruption detection (deliberate bit-flip caught by SHA-256 hash mismatch)
 - ✅ Snapshot take/list/restore API
-- ✅ CoW throughput benchmark (~800 MB/s, ~200K IOPS in eval)
+- ✅ CoW throughput benchmark (performance varies by machine; eval reports ~5,000 IOPS and ~20 MB/s with a 512 MB virtual device on Windows)
 - ✅ Packed on-disk structs with timestamps (mtime, ctime, atime)
 - ✅ File deletion (unlink) and Directory removal (rmdir)
 - ✅ File truncation
-- ✅ FUSE callbacks for: getattr, readdir, mkdir, create, read, write, unlink, rmdir, truncate
+- ✅ FUSE callbacks for: getattr, readdir, mkdir, create, read, write, unlink, rmdir, truncate, rename, chmod, chown, fsync, statfs, open, release, utimens
 - ✅ **Indirect block pointers** — files can now span beyond 40KB by utilizing `zfsl_dnode.indirect` block.
 - ✅ **Directory overflow handling** — directories can now hold up to 160 entries by spanning across all 10 direct blocks.
 - ✅ **Phase 7: FUSE Completeness (Implemented)**
@@ -80,11 +82,11 @@ The multi-block CoW propagation bug has been successfully resolved.
 - **Permissions/Ownership:** `zfsl_dnode` now stores `uid`, `gid`, and `mode`. `ZFS::chmod` and `ZFS::chown` persist these changes, and `getattr` exposes them.
 - **`fsync` / `flush` Support:** Added via `VDev::sync()` on Windows using `_commit()`.
 
-## 4. Current State & Known Issues
+## Current State & Known Issues
 - **Fully Functional Prototype:** All planned features for ZFS-Lite are implemented and verified by `tests/eval.cpp`.
 - **Performance:** `tests/eval.cpp` reports around ~5,000 IOPS and ~20 MB/s CoW throughput with the 512 MB virtual device format on Windows.
 - **Stack Overflow Fix:** A critical stack buffer overflow was discovered and fixed in `traverse_tree_refcounts` (reading 4KB block data into a 512-byte dnode stack buffer).
-- **Future Enhancements:** While all requested features are implemented, a robust `FUSE` integration layer mapping these API methods to a mounted network drive or a third-party FUSE library like WinFsp remains a potential next step for a true native mounting experience.
+- **FUSE Integration:** The FUSE layer (`fuse_layer.cpp`) provides a complete mapping of all filesystem operations, protected by a global mutex for thread safety.
 
 ## Architecture Notes
 
@@ -92,7 +94,7 @@ The multi-block CoW propagation bug has been successfully resolved.
 | Block(s) | Content |
 |---|---|
 | 0 | Uberblock (magic, txg, root pointer, root hash, snapshots) |
-| 1–4 | Bitmap allocator (131072 blocks / 8 bits per byte / 4096 bytes per block = 4 blocks) |
+| 1–4 | Refcount allocator (131072 blocks × 1 byte per block / 4096 bytes per block = 32 blocks, but capped at `ceil(total_blocks / VDEV_BLOCK_SIZE)`) |
 | 5+ | Data & metadata blocks |
 
 ### CoW write flow
@@ -100,13 +102,14 @@ The multi-block CoW propagation bug has been successfully resolved.
 2. Update file dnode's `direct[]` with new block pointers and hashes
 3. `cow_propagate`: walk trace from file → root, CoW'ing each dnode and its parent's dirent block
 4. Update uberblock atomically (increment txg, set new root pointer and hash)
-5. Persist bitmap allocator
+5. Persist allocator refcounts
 
 ### Integrity check on read
 - For each data block read, recompute SHA-256 and compare against stored hash in parent dnode's `direct[].hash`
 - Mismatch → return `-EIO` (detected silent data corruption / bit rot)
 
 ### Snapshot mechanism
-- `take_snapshot()`: saves `{txg, root_blk, root_hash}` into `uberblock.snapshots[]` (max 16)
+- `take_snapshot()`: saves `{txg, root_blk, root_hash}` into `uberblock.snapshots[]` (max 16), then increments refcounts for the entire snapshot tree via `inc_tree_refcounts`
 - `restore_snapshot(txg)`: sets `uberblock.root_blk` to snapshot's root, effectively time-traveling the entire tree
-- While snapshots exist, `cow_free_block()` is a no-op (prevents freeing blocks still referenced by snapshot trees)
+- `delete_snapshot(txg)`: decrements refcounts for the snapshot's tree via `dec_tree_refcounts`; blocks with refcount 0 are freed by the allocator
+- `cow_free_block()` calls `alloc->dec_ref()`, which only truly frees a block when its refcount reaches 0 — ensuring blocks shared across snapshots are preserved
