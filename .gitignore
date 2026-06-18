@@ -1,2 +1,19 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+# Build artifacts
+build/
+*.o
+*.exe
+*.out
+
+# Virtual disk images
+*.img
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS junk
+.DS_Store
+Thumbs.db
