@@ -1,0 +1,53 @@
+\relax 
+\bibstyle{sn-mathphys-num}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\Newlabel{1}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}ZFS Architecture and On-Disk Layout}{2}{section.2}\protected@file@percent }
+\newlabel{sec:arch}{{2}{2}{ZFS Architecture and On-Disk Layout}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}On-Disk Data Structures}{2}{subsection.2.1}\protected@file@percent }
+\newlabel{lst:structs}{{1}{2}{Core on-disk structures defining the ZFSLite layout}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Core on-disk structures defining the ZFSLite layout.}{2}{lstlisting.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Structural Analysis}{3}{subsubsection.2.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Block Allocation and Virtual Device (VDev)}{3}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Core Features and Implementation}{3}{section.3}\protected@file@percent }
+\newlabel{sec:deepdive}{{3}{3}{Core Features and Implementation}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Pooled Storage Paradigm}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}ZFSLite Implementation}{4}{subsubsection.3.1.1}\protected@file@percent }
+\newlabel{lst:zpool}{{2}{4}{Storage pool abstraction managing multiple virtual devices}{lstlisting.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}Storage pool abstraction managing multiple virtual devices.}{4}{lstlisting.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Mounting and Path Resolution}{5}{subsection.3.2}\protected@file@percent }
+\newlabel{lst:resolve}{{3}{5}{Path resolution and trace recording mechanism}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}Path resolution and trace recording mechanism.}{5}{lstlisting.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Copy-on-Write (CoW) Transactional Engine}{6}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}ZFSLite Implementation}{6}{subsubsection.3.3.1}\protected@file@percent }
+\newlabel{lst:cow}{{4}{6}{The Copy-on-Write propagation engine}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}The Copy-on-Write propagation engine.}{6}{lstlisting.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Merkle Tree Data Integrity}{7}{subsection.3.4}\protected@file@percent }
+\newlabel{subsec:merkle}{{3.4}{7}{Merkle Tree Data Integrity}{subsection.3.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Structure of a Merkle Tree, illustrating how cryptographic hashes of data blocks ($m$) are propagated up to the root node.}}{8}{figure.1}\protected@file@percent }
+\newlabel{fig:merkle}{{1}{8}{Structure of a Merkle Tree, illustrating how cryptographic hashes of data blocks ($m$) are propagated up to the root node}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.1}ZFSLite Implementation}{9}{subsubsection.3.4.1}\protected@file@percent }
+\newlabel{lst:read}{{5}{9}{Active Merkle tree integrity validation during read operations}{lstlisting.5}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}Active Merkle tree integrity validation during read operations.}{9}{lstlisting.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Atomic Snapshots and Garbage Collection}{9}{subsection.3.5}\protected@file@percent }
+\newlabel{subsec:snap}{{3.5}{9}{Atomic Snapshots and Garbage Collection}{subsection.3.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.1}ZFSLite Implementation}{10}{subsubsection.3.5.1}\protected@file@percent }
+\newlabel{lst:snap}{{6}{10}{Snapshot creation and reference counting mechanism}{lstlisting.6}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}Snapshot creation and reference counting mechanism.}{10}{lstlisting.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}FUSE Integration Layer}{10}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Evaluation}{11}{section.4}\protected@file@percent }
+\newlabel{sec:eval}{{4}{11}{Evaluation}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Functional Correctness}{11}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Performance Benchmark}{11}{subsection.4.2}\protected@file@percent }
+\newlabel{lst:bench}{{7}{11}{CoW throughput benchmark methodology}{lstlisting.7}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7}CoW throughput benchmark methodology.}{11}{lstlisting.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{12}{section.5}\protected@file@percent }
+\newlabel{sec:conclusion}{{5}{12}{Conclusion}{section.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Teamwork and Contributions}{13}{section.6}\protected@file@percent }
+\newlabel{sec:teamwork}{{6}{13}{Teamwork and Contributions}{section.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}References}{13}{section.7}\protected@file@percent }
+\gdef \@abspage@last{13}
