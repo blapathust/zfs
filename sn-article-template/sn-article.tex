@@ -1,239 +1,416 @@
 %Version 3.1 December 2024
-% See section 11 of the User Manual for version history
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%                                                                 %%
-%% Please do not use \input{...} to include other tex files.       %%
-%% Submit your LaTeX manuscript as one .tex document.              %%
-%%                                                                 %%
-%% All additional figures and files should be attached             %%
-%% separately and not embedded in the \TeX\ document itself.       %%
-%%                                                                 %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
-
-%%=======================================================%%
-%% to print line numbers in the margin use lineno option %%
-%%=======================================================%%
-
-%%\documentclass[lineno,pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-
-%%=========================================================================================%%
-%% the documentclass is set to pdflatex as default. You can delete it if not appropriate.  %%
-%%=========================================================================================%%
-
-%%\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-
-%%Note: the following reference styles support Namedate and Numbered referencing. By default the style follows the most common style. To switch between the options you can add or remove �Numbered� in the optional parenthesis. 
-%%The option is available for: sn-basic.bst, sn-chicago.bst%  
- 
-%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
-%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style
-%%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
-%%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
-%%\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}% Vancouver Numbered Reference Style
-%%\documentclass[pdflatex,sn-vancouver-ay]{sn-jnl}% Vancouver Author Year Reference Style
-%%\documentclass[pdflatex,sn-apa]{sn-jnl}% APA Reference Style
-%%\documentclass[pdflatex,sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}
 
 %%%% Standard Packages
-%%<additional latex packages if required can be included here>
-
-\usepackage{graphicx}%
-\usepackage{multirow}%
-\usepackage{amsmath,amssymb,amsfonts}%
-\usepackage{amsthm}%
-\usepackage{mathrsfs}%
-\usepackage[title]{appendix}%
-\usepackage{xcolor}%
-\usepackage{textcomp}%
-\usepackage{manyfoot}%
-\usepackage{booktabs}%
-\usepackage{algorithm}%
-\usepackage{algorithmicx}%
-\usepackage{algpseudocode}%
-\usepackage{listings}%
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage[title]{appendix}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\usepackage{manyfoot}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{url}
 %%%%
 
-%%%%%=============================================================================%%%%
-%%%%  Remarks: This template is provided to aid authors with the preparation
-%%%%  of original research articles intended for submission to journals published 
-%%%%  by Springer Nature. The guidance has been prepared in partnership with 
-%%%%  production teams to conform to Springer Nature technical requirements. 
-%%%%  Editorial and presentation requirements differ among journal portfolios and 
-%%%%  research disciplines. You may find sections in this template are irrelevant 
-%%%%  to your work and are empowered to omit any such section if allowed by the 
-%%%%  journal you intend to submit to. The submission guidelines and policies 
-%%%%  of the journal take precedence. A detailed User Manual is available in the 
-%%%%  template package for technical guidance.
-%%%%%=============================================================================%%%%
-
-%% as per the requirement new theorem styles can be included as shown below
-\theoremstyle{thmstyleone}%
-\newtheorem{theorem}{Theorem}%  meant for continuous numbers
-%%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
-%% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
-\newtheorem{proposition}[theorem]{Proposition}% 
-%%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
-
-\theoremstyle{thmstyletwo}%
-\newtheorem{example}{Example}%
-\newtheorem{remark}{Remark}%
-
-\theoremstyle{thmstylethree}%
-\newtheorem{definition}{Definition}%
-
-\raggedbottom
-%%\unnumbered% uncomment this for unnumbered level heads
+\lstset{
+  language=C++,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  breaklines=true,
+  frame=single,
+  tabsize=4,
+  captionpos=b,
+  showstringspaces=false
+}
 
 \begin{document}
 
-\title[Article Title]{ZFSLite: a light-weight C++ implementation of the ZFS file system}
-
-%%=============================================================%%
-%% GivenName	-> \fnm{Joergen W.}
-%% Particle	-> \spfx{van der} -> surname prefix
-%% FamilyName	-> \sur{Ploeg}
-%% Suffix	-> \sfx{IV}
-%% \author*[1,2]{\fnm{Joergen W.} \spfx{van der} \sur{Ploeg} 
-%%  \sfx{IV}}\email{iauthor@gmail.com}
-%%=============================================================%%
+\title[Article Title]{ZFSLite: A Lightweight C++ Implementation of the ZFS File System}
 
 \author*[1]{\fnm{Tuan N. A.} \sur{Vu}}\email{tuan.vna2417212@sis.hust.edu.vn}
 \author*[1]{\fnm{Vi P.} \sur{Nguyen}}\email{vi.np2417218@sis.hust.edu.vn}
 \equalcont{These authors contributed equally to this work.}
-\affil*[1]{\orgdiv{School of Information and Communication Technology}, \orgname{Hanoi University of Science and Technology}, \orgaddress{\street{1} \street{Dai Co Viet}, \city{Hanoi}, \country{Vietnam}}}
+\affil*[1]{\orgdiv{School of Information and Communication Technology}, \orgname{Hanoi University of Science and Technology}, \orgaddress{\street{1 Dai Co Viet}, \city{Hanoi}, \country{Vietnam}}}
 
-%%==================================%%
-%% Sample for unstructured abstract %%
-%%==================================%%
-
-\abstract{Modern file systems increasingly rely on advanced features such as Copy-on-Write (CoW), cryptographic integrity verification, and atomic snapshots to ensure data reliability and simplify storage management, which is the reason why ZFS and Btrfs file systems are widely utilized in data-critical infrastructures. In this report, we present ZFSLite, a lightweight, userspace file system (FUSE) implemented in C++ that demonstrates the core principles of modern advanced file systems. ZFSLite operates over a virtual block device and provides a functional implementation of CoW semantics, Merkle tree-based data integrity verification using SHA-256, and a persistent reference-counted block allocator. Furthermore, it supports essential POSIX operations, including cross-directory renames, permissions, and atomic snapshots with efficient garbage collection. Evaluation of our prototype demonstrates functional correctness and practical performance, achieving approximately 5,000 IOPS and 20 MB/s throughput during CoW operations.}
-
-%%================================%%
-%% Sample for structured abstract %%
-%%================================%%
-
-% \abstract{\textbf{Purpose:} The abstract serves both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications. The abstract must not include subheadings (unless expressly permitted in the journal's Instructions to Authors), equations or citations. As a guide the abstract should not exceed 200 words. Most journals do not set a hard limit however authors are advised to check the author instructions for the journal they are submitting to.
-% 
-% \textbf{Methods:} The abstract serves both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications. The abstract must not include subheadings (unless expressly permitted in the journal's Instructions to Authors), equations or citations. As a guide the abstract should not exceed 200 words. Most journals do not set a hard limit however authors are advised to check the author instructions for the journal they are submitting to.
-% 
-% \textbf{Results:} The abstract serves both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications. The abstract must not include subheadings (unless expressly permitted in the journal's Instructions to Authors), equations or citations. As a guide the abstract should not exceed 200 words. Most journals do not set a hard limit however authors are advised to check the author instructions for the journal they are submitting to.
-% 
-% \textbf{Conclusion:} The abstract serves both as a general introduction to the topic and as a brief, non-technical summary of the main results and their implications. The abstract must not include subheadings (unless expressly permitted in the journal's Instructions to Authors), equations or citations. As a guide the abstract should not exceed 200 words. Most journals do not set a hard limit however authors are advised to check the author instructions for the journal they are submitting to.}
+\abstract{Modern file systems increasingly rely on advanced features such as Copy-on-Write
+(CoW), cryptographic integrity verification, and atomic snapshots to ensure
+data reliability and simplify storage management, which is the reason why ZFS
+and Btrfs file systems are widely utilized in data-critical infrastructures. In this
+report, we present ZFSLite, a lightweight, userspace file system (FUSE) implemented in C++ that demonstrates the core principles of modern advanced file
+systems. ZFSLite operates over a virtual block device and provides a functional
+implementation of CoW semantics, Merkle tree-based data integrity verification
+using SHA-256, and a persistent reference-counted block allocator. Furthermore,
+it supports essential POSIX operations, including cross-directory renames, permissions, and atomic snapshots with efficient garbage collection. Evaluation of
+our prototype demonstrates functional correctness and practical performance,
+achieving approximately 5,000 IOPS and 20 MB/s throughput during CoW
+operations.}
 
 \keywords{ZFS, Copy-on-Write (CoW), FUSE, Merkle Tree, File System, C++}
 
-%%\pacs[JEL Classification]{D8, H51}
-
-%%\pacs[MSC Classification]{35A01, 65L10, 65L12, 65L20, 65L70}
-
 \maketitle
 
-\section{Introduction}\label{sec1}
+%% ===================================================================
+%% SECTION 1: INTRODUCTION
+%% ===================================================================
+
+\section{Introduction}\label{sec:intro}
 
 The proliferation of data-intensive applications has driven the evolution of file systems from simple block allocators to complex storage managers that provide advanced features such as data integrity verification, atomic snapshots, and transparent volume management. Modern file systems, such as ZFS and Btrfs, utilize Copy-on-Write (CoW) semantics to ensure transactional consistency and facilitate instantaneous snapshotting without data duplication. Furthermore, these systems employ Merkle trees with cryptographic hashes to detect and prevent silent data corruption, a critical requirement for enterprise storage environments.
 
 In order to deeply study and understand these mechanisms, we implemented ZFSLite, a lightweight, userspace file system that isolates the core concepts found in advanced file systems. Developed in C++ using the Filesystem in Userspace (FUSE) framework, ZFSLite allowed us to practically examine the fundamental operations of CoW block allocation, Merkle tree-based integrity checking via SHA-256, and snapshot management over a virtual block device. By building these mechanisms from the ground up in userspace, we were able to directly investigate the complexities of modern file system design without the overhead of kernel-level development. In this report, we detail our implementation of ZFSLite, explore its on-disk data structures, and present an evaluation of its performance and functional correctness.
 
-\section{Overview of ZFS}\label{sec2}
 
-ZFS is a revolutionary combined file system and logical volume manager originally developed by Sun Microsystems. Unlike traditional architectures that separate volume management from file system logic, ZFS integrates both layers, providing unprecedented control over underlying storage resources, ensuring data integrity, and enabling advanced features previously impossible in traditional stack designs.
+%% ===================================================================
+%% SECTION 2: ZFS ARCHITECTURE AND ON-DISK LAYOUT
+%% ===================================================================
+
+\section{ZFS Architecture and On-Disk Layout}\label{sec:arch}
+
+To fully comprehend the advanced mechanisms of ZFS, it is necessary to first understand the structural foundation upon which it operates. Traditional file systems like ext4 or FAT32 rely on static partition maps and linear block allocations. ZFS, however, integrates volume management and file system logic, operating on a dynamic tree-based structure.
 
 \subsection{Pooled Storage Paradigm}
 
-Traditional file systems require pre-allocated partitions of fixed sizes, leading to fragmented and inefficient storage utilization. ZFS eliminates traditional partitions by introducing the concept of storage pools. Storage devices are aggregated into a unified pool from which multiple file systems can draw space dynamically. This pooled storage paradigm ensures that available capacity is shared efficiently among all file systems without the need for manual resizing or volume management.
+Traditional file systems require pre-allocated partitions of fixed sizes, leading to fragmented and inefficient storage utilization. When a partition is full, administrators must perform complex and error-prone operations such as resizing volumes or migrating data. ZFS eliminates traditional partitions by introducing the concept of \textit{storage pools} (zpools). Physical storage devices are aggregated into a unified pool from which multiple file systems (datasets) can draw space dynamically.
 
-\subsection{Core Features Overview}
+\subsection{On-Disk Data Structures}
 
-The robustness of ZFS stems from three core architectural pillars:
+In ZFSLite, we model the foundational structures of ZFS using strictly packed C++ structures. These structures represent the exact binary layout written to the physical storage medium. The hierarchy consists of the Uberblock (the root of trust), dnodes (representing files/directories), dirents (directory entries), and block pointers.
 
-\begin{itemize}
-    \item \textbf{Copy-on-Write (CoW):} Traditional file systems overwrite data in place, which can lead to data corruption or inconsistent states during a power failure or system crash. ZFS employs a Copy-on-Write transaction model. When data is modified, the new data is written to a newly allocated block rather than overwriting the existing data. Once the new data is securely written, the file system metadata is updated to point to the new block. This ensures that the file system is always in a consistent state on disk.
-    \item \textbf{End-to-End Data Integrity:} ZFS organizes its data and metadata into a Merkle Tree structure. Every block of data is cryptographically hashed, and this hash is stored within its parent block pointer. This chain of trust continues up to the root of the tree, the Uberblock. Whenever data is read, its hash is recalculated and compared against the stored hash. If there is a mismatch, ZFS detects the silent data corruption (bit-rot).
-    \item \textbf{Snapshots:} By leveraging the CoW architecture, ZFS can take instantaneous, zero-space snapshots. Since old data blocks are not overwritten when changes occur, a snapshot simply involves preserving the current root pointer and preventing the allocator from reclaiming the active blocks. Snapshots consume no additional space initially, only utilizing storage as live data diverges from the snapshot state.
-\end{itemize}
+\begin{lstlisting}[caption={Core on-disk structures defining the ZFSLite layout.}, label={lst:structs}]
+#pragma pack(push, 1)
 
-\section{Analysis \& ZFSLite Implementation}\label{sec3}
+// The fundamental block pointer: contains the address and the checksum
+struct zfsl_blkptr {
+    uint64_t blk_no;
+    uint8_t hash[32]; // SHA-256 cryptographic hash
+};
 
-While the theoretical concepts of ZFS are well-documented, realizing them in code requires careful coordination between block allocation, cryptographic hashing, and metadata propagation. In this section, we map theoretical ZFS concepts directly to our C++ implementation in the ZFSLite prototype, utilizing specific code snippets to illustrate the mechanics.
+// The dnode represents a file or a directory
+struct zfsl_dnode {
+    uint32_t type;     // ZFSL_DNODE_FILE or ZFSL_DNODE_DIR
+    uint64_t size;     // File size or directory byte length
+    uint64_t mtime;    // Timestamps
+    uint64_t ctime;
+    uint64_t atime;
+    uint32_t uid;      // User ID
+    uint32_t gid;      // Group ID
+    uint32_t mode;     // Posix permissions
+    zfsl_blkptr direct[10]; // Pointers to direct data blocks
+    zfsl_blkptr indirect;   // Pointer to an array of indirect blocks
+};
+
+// The Uberblock is the absolute root of the file system
+struct zfsl_uberblock {
+    uint64_t magic;         // Format identifier
+    uint64_t txg;           // Transaction Group (version counter)
+    uint64_t root_blk;      // Pointer to the root directory's dnode
+    uint8_t root_hash[32];  // SHA-256 hash of the root dnode
+    uint32_t snapshot_count;
+    zfsl_snapshot snapshots[16]; // Snapshot metadata array
+};
+
+#pragma pack(pop)
+\end{lstlisting}
+
+\subsubsection{Structural Analysis}
+The most critical innovation in this layout is the \verb+zfsl_blkptr+. In legacy file systems, a block pointer is merely a 32-bit or 64-bit integer representing an LBA (Logical Block Address). In ZFSLite, every single pointer is a composite structure containing both the LBA and a 32-byte SHA-256 hash. This design physically binds data location to data validation, forming the backbone of the Merkle tree architecture. 
+
+The \verb+zfsl_uberblock+ acts as the apex of this tree. It tracks the current Transaction Group (\verb+txg+), which acts as an atomic sequence number for file system states.
+
+\subsection{Block Allocation and Virtual Device (VDev)}
+
+To persist these structures, ZFSLite interacts with a Virtual Device (VDev) layer that abstracts raw file I/O into strict 4\,KB block operations. 
+
+Traditional file systems track free blocks using a bitmap (1 bit per block). However, to support $O(1)$ snapshots where multiple file system states can share the exact same physical block, a single bit is insufficient. ZFSLite implements a \textbf{Reference Counted Block Allocator}. Instead of a bitmap, it utilizes an array of 8-bit unsigned integers. A value of $0$ indicates a free block, $1$ indicates a block exclusively owned by the live file system, and values greater than $1$ indicate a block shared by the live system and historical snapshots.
+
+
+%% ===================================================================
+%% SECTION 3: DEEP DIVE INTO CORE FEATURES
+%% ===================================================================
+
+\section{Deep Dive: Core Mechanisms and Implementation}\label{sec:deepdive}
+
+In this section, we analyze the defining mechanisms of ZFS---Copy-on-Write, Merkle Tree integrity, and Snapshots. We provide a detailed theoretical analysis of why these mechanisms are necessary in modern storage, followed by an in-depth examination of how they are implemented within the ZFSLite engine.
+
+\subsection{Mounting and Path Resolution}
+
+Before any high-level feature can operate, the file system must be able to translate human-readable paths (e.g., \verb+/home/user/doc.txt+) into physical block addresses.
+
+In ZFSLite, path resolution traverses the directory tree block by block. However, because of the strict Copy-on-Write requirement, we cannot merely find the target block; we must remember exactly how we got there. The \verb+resolve_path+ algorithm records a \verb+PathNode+ trace for every step of the traversal.
+
+\begin{lstlisting}[caption={Path resolution and trace recording mechanism.}, label={lst:resolve}]
+uint64_t ZFS::resolve_path(const std::string& path, zfsl_dnode* out, std::vector<PathNode>* trace) {
+    // 1. Read the root dnode from the Uberblock
+    if (!read_dnode(uberblock.root_blk, out)) return 0;
+    
+    // 2. Push the root onto the trace stack
+    if (trace) trace->push_back({0, uberblock.root_blk, *out, 0, -1});
+    
+    // 3. Tokenize path and traverse down the tree
+    std::vector<std::string> parts = split_path(path);
+    uint64_t cur = uberblock.root_blk;
+    
+    for (const auto& part : parts) {
+        // Search through the directory's dirent blocks
+        // ... (directory parsing logic) ...
+        
+        if (found) {
+            uint64_t par = cur;
+            cur = dirent->dnode_blk;
+            read_dnode(cur, out);
+            
+            // Record the parent, the child block, the exact dirent index, and the dnode state
+            if (trace) trace->push_back({par, cur, *out, dirent_blk_no, dirent_idx});
+        }
+    }
+    return cur;
+}
+\end{lstlisting}
+
+This \verb+std::vector<PathNode> trace+ operates as the breadcrumb trail that the CoW engine will follow backward. Without this trace, it would be impossible to efficiently locate the parent pointers that must be updated when a leaf node is relocated.
 
 \subsection{Copy-on-Write (CoW) Transactional Engine}
 
-\textbf{ZFS Concept:} In a traditional file system, data is overwritten in place, creating a vulnerability window where a sudden power failure or system crash can leave the file system in an inconsistent, unrecoverable state (often requiring a lengthy \verb+fsck+ operation). ZFS fundamentally avoids this by employing a strict Copy-on-Write (CoW) transactional model. When any piece of data or metadata is modified, the new version is written to a newly allocated block on disk, leaving the old block intact. Because file systems are inherently tree-like structures, modifying a leaf node requires updating its parent's pointer to reference the new block. This parent update is itself a modification, which must also be written to a new block. Consequently, every change triggers a cascading wave of CoW allocations that recursively propagates up the directory tree until it reaches the root, known as the Uberblock. The transaction only commits when a new Uberblock is successfully written, guaranteeing atomic transitions from one consistent state to another without ever risking in-place corruption.
+\subsubsection{Theoretical Analysis}
+The fundamental problem in legacy file system design is the "update-in-place" paradigm. When an application modifies a file, the file system overwrites the existing data blocks on the disk. If a power failure occurs halfway through this overwrite, the block contains a mixture of old and new data, leading to catastrophic corruption. 
 
-\textbf{ZFSLite Implementation:} This propagation is handled by the \verb+ZFS::cow_propagate+ function in \verb+src/zfs.cpp+ (lines 205--249). When a file is modified, its updated \verb+zfsl_dnode+ must be written to a fresh block. The function then walks the path trace from the leaf node up to the root, allocating new blocks for each parent directory and updating the respective block pointers.
+Journaling (Write-Ahead Logging) was introduced to mitigate this. Ext4, for example, writes intent to a journal before modifying the main disk area. While safe, this incurs significant performance penalties because data is written twice.
 
-\begin{lstlisting}[language=C++]
+ZFS radically redefines this by enforcing strict Copy-on-Write (CoW). In ZFS, an active data block is \textbf{never} overwritten. When data is modified, a completely new, free block is allocated, and the new data is written there. Because the location of the data has changed, the parent node (the file's dnode) must be updated to point to this new block. However, modifying the parent dnode in-place is also forbidden by CoW rules. Therefore, the parent dnode must be written to a new block. This update forces the parent's parent (a directory dnode) to be written to a new block, triggering a cascading wave of allocations that propagates upward until it reaches the Uberblock at the root of the tree. 
+
+The transaction is only finalized when a single, atomic disk sector write updates the Uberblock to point to the new root. If the system crashes at any point prior to this final Uberblock write, the file system remains perfectly intact, pointing to the old data.
+
+\subsubsection{ZFSLite Implementation}
+
+In ZFSLite, the \verb+cow_propagate+ function is the engine that drives this mechanism. It takes the \verb+PathNode+ trace generated by \verb+resolve_path+ and processes it in reverse (from leaf to root).
+
+\begin{lstlisting}[caption={The Copy-on-Write propagation engine.}, label={lst:cow}]
 void ZFS::cow_propagate(std::vector<PathNode>& trace, zfsl_dnode& leaf) {
     zfsl_dnode cur = leaf;
     std::vector<uint64_t> deferred_frees;
-    
-    // ... CoW path construction ...
+
+    // Traverse the trace from bottom (leaf) to top (root)
     for (int i = (int)trace.size() - 1; i >= 0; --i) {
         PathNode& node = trace[i];
+
+        // 1. Allocate a completely new block and write the current node state
         uint64_t new_blk = alloc->alloc_block();
         write_dnode(new_blk, &cur);
-        deferred_frees.push_back(node.dnode_blk); // defer free
-        // ... update parent pointers ...
-    }
-    
-    // Free all old blocks AFTER all allocations are done
-    for (uint64_t blk : deferred_frees)
-        cow_free_block(blk);
-}
-\end{lstlisting}
+        
+        // 2. Record the old block to be freed later
+        deferred_frees.push_back(node.dnode_blk);
 
-As shown in the excerpt from \verb+src/zfs.cpp+ (lines 205--249), a critical challenge during CoW propagation is managing the lifecycle of old blocks. If a block is freed immediately while the transaction is still constructing the path, the block allocator might recycle and overwrite that block before the transaction safely commits. To prevent this, ZFSLite utilizes the \verb+deferred_frees+ vector to delay the deallocation of old blocks until the entire CoW path has been securely written to disk and the transaction is complete.
-
-\subsection{Merkle Tree Data Integrity}
-
-\textbf{ZFS Concept:} Silent data corruption, often referred to as `bit-rot', occurs when data degrades on storage media without the disk drive reporting any hardware errors. Traditional file systems trust the storage hardware implicitly and cannot detect these silent errors. ZFS addresses this by organizing its entire on-disk layout into a Merkle Tree. Every data and metadata block is cryptographically hashed (typically using SHA-256 or similar algorithms). Crucially, the hash of a block is not stored within the block itself, but rather within the parent block pointer that references it. This creates a self-validating chain of trust: a block's integrity is verified by its parent, the parent is verified by the grandparent, all the way up to the Uberblock. When data is read from disk, ZFS independently recalculates the hash of the retrieved data and compares it against the expected hash stored in the trusted parent pointer. This end-to-end verification guarantees that the data returned to the application is exactly the data that was originally written.
-
-\textbf{ZFSLite Implementation:} The \verb+ZFS::read+ function (found in \verb+src/zfs.cpp+, lines 488--520) enforces this strict integrity check on every read operation. When a block is retrieved from the virtual block device, it is immediately hashed using SHA-256 before its contents are trusted or served to the user application.
-
-\begin{lstlisting}[language=C++]
-// Recompute and verify hash
-uint8_t computed_hash[32];
-compute_sha256(dbuf, VDEV_BLOCK_SIZE, computed_hash);
-if (memcmp(computed_hash, target_hash, 32) != 0) {
-    std::cerr << "INTEGRITY ERROR: hash mismatch on block " 
-              << target_blk << std::endl;
-    return -EIO;
-}
-\end{lstlisting}
-
-As demonstrated in this snippet from \verb+src/zfs.cpp+ (lines 504--510), ZFSLite actively intercepts corrupted data. The \verb+compute_sha256+ function recalculates the 4KB block hash and compares it against the \verb+target_hash+ retrieved from the parent's block pointer. If \verb+memcmp+ detects a mismatch, the file system immediately logs an integrity error and returns \verb+-EIO+, preventing corrupted data from propagating to the user application.
-
-\subsection{$O(1)$ Snapshots \& Reference-Counted Allocation}
-
-\textbf{ZFS Concept:} A snapshot provides an instantaneous, read-only, point-in-time copy of a file system. In traditional systems, creating a snapshot often involves freezing I/O and copying massive amounts of data, which is slow and space-intensive. ZFS leverages its Copy-on-Write foundation to create snapshots in $O(1)$ time with zero initial space overhead. Because active data blocks are never overwritten, a snapshot is created simply by preserving the current state of the Uberblock and ensuring that the blocks it references are not recycled when the live file system deletes or modifies them. As the live file system continues to operate and diverge from the snapshot, new CoW blocks are allocated, and only the divergent data consumes additional storage space. This mechanism requires a robust garbage collection strategy: blocks can only be safely reclaimed when they are no longer referenced by the live file system nor by any historical snapshots.
-
-\textbf{ZFSLite Implementation:} The \verb+ZFS::take_snapshot+ function saves the current \verb+uberblock+ state, including the \verb+root_blk+ and \verb+root_hash+. However, tracking block lifecycles across multiple snapshots requires more than a traditional free-space bitmap. ZFSLite utilizes an 8-bit reference counting mechanism in its \verb+BlockAllocator+.
-
-\begin{lstlisting}[language=C++]
-void BlockAllocator::dec_ref(uint64_t blk_no) {
-    uint64_t first_data = 1 + bitmap_blocks;
-    if (blk_no >= first_data && blk_no < total_blocks) {
-        if (refcounts[blk_no] > 0) {
-            refcounts[blk_no]--;
+        // 3. If we reached the root, update the Uberblock and stop
+        if (i == 0) {
+            uberblock.root_blk = new_blk;
+            compute_sha256(&cur, sizeof(zfsl_dnode), uberblock.root_hash);
+            break;
         }
+
+        // 4. Otherwise, update the parent's pointer to reference the new block
+        PathNode& parent = trace[i - 1];
+        uint64_t old_db = node.dirent_blk;
+        uint64_t new_db = alloc->alloc_block(); // CoW the parent's dirent block too
+        
+        // ... (read old_db, update dirent pointer to new_blk, write to new_db) ...
+        
+        // Update the parent dnode to point to the new dirent block
+        for (int s = 0; s < 10; ++s) {
+            if (parent.dnode.direct[s].blk_no == old_db) {
+                compute_sha256(d_buf, VDEV_BLOCK_SIZE, parent.dnode.direct[s].hash);
+                parent.dnode.direct[s].blk_no = new_db;
+                break;
+            }
+        }
+        deferred_frees.push_back(old_db);
+        cur = parent.dnode; // Move up the tree
+    }
+
+    // 5. Critical Phase: Free old blocks ONLY AFTER the new tree is complete
+    for (uint64_t blk : deferred_frees) {
+        cow_free_block(blk);
     }
 }
 \end{lstlisting}
 
-The implementation of this garbage collection logic can be seen in \verb+src/allocator.cpp+ (lines 68--75). Instead of a traditional free-space bitmap where a single bit indicates if a block is free or used, ZFSLite utilizes an 8-bit reference counting array. When a snapshot is taken, the file system traverses the active tree and calls \verb+inc_ref+ to increment the counter for every referenced block. Later, when a file is modified or deleted in the live file system, the \verb+dec_ref+ function (shown above) decrements this counter. A block's space is only truly recycled and returned to the free pool when its reference count drops to exactly zero.
+This implementation meticulously enforces consistency. A subtle but critical component of this logic is the \verb+deferred_frees+ vector (lines 3, 14, 43). During the upward traversal, superseded blocks are added to this list but are \textit{not} immediately released to the allocator. If a block were freed immediately at step 2, the \verb+alloc->alloc_block()+ call at step 4 might recycle that exact block for a higher-level directory node. If a crash occurred immediately after, the old block would be overwritten, destroying the previous consistent state of the file system. By deferring all frees until the entire propagation chain is resolved, ZFSLite ensures perfect atomicity.
 
-\section{Conclusion}\label{sec4}
+\subsection{Merkle Tree Data Integrity}\label{subsec:merkle}
 
-ZFS has revolutionized storage by addressing the fundamental flaws of traditional file systems, offering unparalleled data safety, dynamic pooled storage, and zero-space snapshots. By implementing these mechanics in userspace, ZFSLite distills these enterprise storage concepts into an accessible prototype. 
+\subsubsection{Theoretical Analysis}
+As storage capacities grow into the petabyte scale, the statistical probability of silent data corruption (bit-rot) approaches certainty. Magnetic interference, cosmic rays, degraded flash cells, or firmware bugs can alter data without throwing any hardware error. Traditional file systems inherently trust the hardware; when an application requests a file, the file system reads the blocks and blindly passes them up, propagating corruption into application logic or backups.
+
+ZFS introduces the concept of End-to-End Data Integrity. The entire file system is structured as a Merkle Tree (Figure~\ref{fig:merkle}). Every block of data is cryptographically hashed. However, storing the hash inside the block itself is insecure (if the block is corrupted or maliciously altered, the hash can be altered to match). Instead, ZFS stores the hash in the \textit{parent} block pointer. The root of this tree (the Uberblock) provides the ultimate anchor of trust. By verifying the hash dynamically upon every read, ZFS can definitively prove whether the data retrieved from the physical disk is perfectly identical to the data that was originally written.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\textwidth]{merkle-tree.jpg}
+\caption{Structure of a Merkle Tree, illustrating how cryptographic hashes of data blocks ($m$) are propagated up to the root node.}
+\label{fig:merkle}
+\end{figure}
+
+\clearpage
+\subsubsection{ZFSLite Implementation}
+ZFSLite utilizes the SHA-256 algorithm to implement this tree. Every \verb+zfsl_blkptr+ contains a 32-byte hash array. The cryptographic validation is deeply embedded in the read path.
+
+\begin{lstlisting}[caption={Active Merkle tree integrity validation during read operations.}, label={lst:read}]
+int ZFS::read(const char *path, char *buf, size_t size, off_t offset) {
+    // ... (path resolution and boundary checks) ...
+    
+    for (uint64_t b = start_b; b <= end_b; ++b) {
+        // 1. Locate the trusted hash from the parent dnode's pointer
+        uint64_t target_blk = dn.direct[b].blk_no;
+        uint8_t* expected_hash = dn.direct[b].hash;
+
+        // 2. Perform raw disk I/O
+        char blk[VDEV_BLOCK_SIZE];
+        vdev->read_block(target_blk, blk);
+
+        // 3. Dynamically compute the SHA-256 hash of the retrieved data
+        uint8_t computed_hash[32];
+        compute_sha256(blk, VDEV_BLOCK_SIZE, computed_hash);
+
+        // 4. Validate integrity
+        if (memcmp(computed_hash, expected_hash, 32) != 0) {
+            std::cerr << "SILENT CORRUPTION DETECTED: Hash mismatch on block " << target_blk << "\n";
+            return -EIO; // Return standard I/O error to the OS
+        }
+
+        // 5. If validation passes, copy data to the user buffer
+        memcpy(buf + buffer_offset, blk + block_offset, copy_length);
+    }
+    return bytes_read;
+}
+\end{lstlisting}
+
+As demonstrated in Listing~\ref{lst:read}, the hardware is never trusted. After raw disk I/O is performed, the CPU computes the SHA-256 digest of the block buffer. The \verb+memcmp+ operation enforces absolute equality. If a single bit in the 4\,KB block is flipped by the virtual device, the resulting hash will be wildly different, triggering the \verb+-EIO+ return code. This active detection prevents the silent propagation of corrupted data to the user application.
+
+\subsection{Atomic Snapshots and Garbage Collection}\label{subsec:snap}
+
+\subsubsection{Theoretical Analysis}
+A snapshot is a frozen, read-only replica of a file system at a specific point in time. Legacy snapshot mechanisms (such as LVM snapshots) often operate at the block layer and require duplicating entire chunks of data, which degrades I/O performance and consumes significant storage space.
+
+ZFS creates snapshots instantaneously in $O(1)$ time with zero initial space overhead by leveraging the CoW engine. Because CoW dictates that active blocks are never overwritten, the historical state of the file system is naturally preserved on disk. Creating a snapshot simply requires saving the current Uberblock pointer and ensuring that the historical blocks are protected from the garbage collector, even if the live file system deletes or modifies those files later.
+
+\subsubsection{ZFSLite Implementation}
+To implement this, ZFSLite relies on its 8-bit reference counting allocator. Creating a snapshot requires recording the root and recursively incrementing the reference count for every active block.
+
+\begin{lstlisting}[caption={Snapshot creation and reference counting mechanism.}, label={lst:snap}]
+int ZFS::take_snapshot() {
+    std::lock_guard<std::mutex> lock(zfs_mutex);
+    
+    // 1. Record the current state of the Uberblock into the snapshot array
+    uint32_t idx = uberblock.snapshot_count++;
+    uberblock.snapshots[idx].txg = uberblock.txg;
+    uberblock.snapshots[idx].root_blk = uberblock.root_blk;
+    memcpy(uberblock.snapshots[idx].root_hash, uberblock.root_hash, 32);
+
+    // 2. Traverse the entire tree to increment reference counts
+    inc_tree_refcounts(uberblock.root_blk);
+    
+    // 3. Persist the allocator and Uberblock state
+    alloc->save();
+    save_uberblock();
+    return 0;
+}
+
+void ZFS::inc_tree_refcounts(uint64_t dnode_blk) {
+    zfsl_dnode dn;
+    read_dnode(dnode_blk, &dn);
+    
+    // Increment the dnode block itself
+    alloc->inc_ref(dnode_blk);
+
+    if (dn.type == ZFSL_DNODE_FILE) {
+        // Increment all direct data blocks
+        for (int i = 0; i < 10; ++i) {
+            if (dn.direct[i].blk_no != 0) alloc->inc_ref(dn.direct[i].blk_no);
+        }
+        // ... (handle indirect blocks) ...
+    } else if (dn.type == ZFSL_DNODE_DIR) {
+        // Traverse directory and recursively increment children
+        // ...
+    }
+}
+\end{lstlisting}
+
+Garbage collection becomes an elegant byproduct of this architecture. When the live file system deletes a file, it calls \verb+alloc->dec_ref()+. If a block is shared with a snapshot, its reference count will decrease (e.g., from 2 to 1), but the block will not be freed. The block is only returned to the free pool when all snapshots referencing it are deleted and its reference count hits strictly zero.
+
+\subsection{FUSE Integration Layer}
+To expose these mechanisms to the operating system, ZFSLite utilizes the FUSE (Filesystem in Userspace) framework. A translation layer maps POSIX system calls (\verb+getattr+, \verb+mkdir+, \verb+read+, \verb+write+, \verb+unlink+) to the corresponding ZFSLite engine methods. Because the engine is not inherently thread-safe, a single global \verb+std::mutex+ aggressively serializes all FUSE callbacks to ensure transactional integrity across multi-threaded I/O operations.
+
+
+%% ===================================================================
+%% SECTION 4: EVALUATION
+%% ===================================================================
+
+\section{Evaluation}\label{sec:eval}
+
+We evaluated ZFSLite on a Windows platform utilizing WinFSP over a 512\,MB virtual device image. The evaluation suite bypasses the FUSE layer to directly measure the core engine's functional correctness and raw performance overhead.
+
+\subsection{Functional Correctness}
+
+The file system passed all functional correctness tests, including cross-directory atomic renames, deeply nested directory traversals, and full snapshot lifecycle management (creation, rollback, and deletion).
+
+Crucially, the evaluation suite validates the Merkle tree via active corruption injection. The test script writes a file, computes its physical location on the virtual device, and directly manipulates the binary image file to flip a single byte in the data block. Upon requesting a read of the file via the engine, ZFSLite successfully intercepts the operation, prints an integrity mismatch warning, and returns an \verb+-EIO+ error code, fully mitigating the bit-rot simulation.
+
+\subsection{Performance Benchmark}
+
+To quantify the overhead introduced by the advanced mechanisms, we measured the throughput of 100 consecutive 4\,KB block writes to a single file. Unlike a legacy file system, each of these writes forces ZFSLite to execute a complete CoW transaction:
+1. Allocate a new data block and write the payload.
+2. Compute the SHA-256 hash of the payload.
+3. Propagate the structural changes upward, allocating new directory nodes and recomputing their respective hashes.
+4. Persist the reference-counted allocator state to the device.
+5. Commit the new Uberblock to disk via synchronous I/O.
+
+Despite this heavy transactional workload, the benchmark achieved an approximate throughput of 20 MB/s, equating to roughly 5,000 IOPS. While significantly slower than native kernel-level file systems, this performance is highly practical for a userspace prototype and accurately reflects the cryptographic overhead of Merkle tree maintenance.
+
+
+%% ===================================================================
+%% SECTION 5: CONCLUSION
+%% ===================================================================
+
+\section{Conclusion}\label{sec:conclusion}
+
+ZFS has revolutionized storage by addressing the fundamental flaws of traditional file systems, offering unparalleled data safety, dynamic pooled storage, and zerospace snapshots. By implementing these mechanics in userspace, ZFSLite distills these enterprise storage concepts into an accessible prototype.
 
 Through its comprehensive evaluation, the ZFSLite prototype successfully achieves cryptographically secure file operations, robust directory overflow handling, and active, real-time corruption detection. By building these mechanisms entirely in C++, we gained practical insights into the complex choreography of Copy-on-Write propagation and reference-counted garbage collection.
 
 Despite its success as a conceptual model, ZFSLite has notable limitations inherent to its architecture. The reliance on the FUSE framework introduces an inherent performance bottleneck, further exacerbated by a single global mutex (\verb+std::lock_guard<std::mutex> lock(zfs_mutex)+ in \verb+src/fuse_layer.cpp+) that aggressively serializes all I/O operations. Furthermore, ZFSLite lacks RAID-Z parity support for physical disk redundancy and omits advanced POSIX features such as extended attributes and symlinks. Addressing these concurrency bottlenecks and implementing multi-disk volume management represent promising avenues for future development.
 
-\backmatter
+%% ===================================================================
+%% SECTION 6: TEAMWORK AND CONTRIBUTIONS
+%% ===================================================================
+
+\section{Teamwork and Contributions}\label{sec:teamwork}
+
+The ZFSLite project was collaboratively developed by the team. Each member made significant contributions to the project:
+
+\begin{itemize}
+    \item \textbf{Tuan N. A. Vu:} Implementing ZFSLite, report and slides authoring.
+    \item \textbf{Vi P. Nguyen:} Implementing ZFSLite, report and slides authoring.
+\end{itemize}
+
+%% ===================================================================
+%% SECTION 7: REFERENCES
+%% ===================================================================
+
+\section{References}
+\begin{itemize}
+    \item Figure~\ref{fig:merkle} Source: \url{https://medium.com/@aannkkiittaa/understanding-fri-polynomial-commitments-scheme-7391da74c9d9}
+\end{itemize}
 
 \end{document}
