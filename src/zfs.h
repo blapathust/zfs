@@ -1,8 +1,7 @@
 #ifndef ZFS_H
 #define ZFS_H
 
-#include "vdev.h"
-#include "allocator.h"
+#include "zpool.h"
 #include "zfs_structures.h"
 #include "sha256.h"
 #include <string>
@@ -20,7 +19,12 @@ struct PathNode {
 
 class ZFS {
 public:
+    // Single-VDev constructor (backward compatible)
     ZFS(const std::string& img_path, uint64_t vdev_size = 512ULL * 1024 * 1024);
+
+    // Multi-VDev constructor (pooled storage)
+    ZFS(const std::vector<std::string>& img_paths, uint64_t per_vdev_size = 512ULL * 1024 * 1024);
+
     ~ZFS();
 
     bool mount();
@@ -55,10 +59,8 @@ public:
     void get_space_info(uint64_t* total_blocks, uint64_t* free_blocks);
 
 private:
-    VDev* vdev;
-    BlockAllocator* alloc;
+    ZPool* pool;
     zfsl_uberblock uberblock;
-    uint64_t vdev_size;
 
     bool load_uberblock();
     bool save_uberblock();

@@ -11,14 +11,24 @@ typedef int (*fuse_fill_dir_t)(void *buf, const char *name,
 
 // Constructor / Destructor
 
+// Single-VDev constructor (backward compatible)
 ZFS::ZFS(const std::string& img_path, uint64_t vdev_size)
-    : vdev(new VDev(img_path)), alloc(nullptr), vdev_size(vdev_size) {
+    : pool(new ZPool()) {
+    pool->add_vdev(img_path, vdev_size);
+    memset(&uberblock, 0, sizeof(uberblock));
+}
+
+// Multi-VDev constructor (pooled storage)
+ZFS::ZFS(const std::vector<std::string>& img_paths, uint64_t per_vdev_size)
+    : pool(new ZPool()) {
+    for (const auto& path : img_paths) {
+        pool->add_vdev(path, per_vdev_size);
+    }
     memset(&uberblock, 0, sizeof(uberblock));
 }
 
 ZFS::~ZFS() {
-    delete alloc;
-    delete vdev;
+    delete pool;
 }
 
 uint64_t ZFS::current_time() {
@@ -29,24 +39,26 @@ uint64_t ZFS::current_time() {
 
 bool ZFS::mount() {
     bool is_new = false;
-    if (!vdev->open()) {
-        std::cout << "Formatting VDEV (" << (vdev_size / (1024*1024)) << " MB)..." << std::endl;
-        vdev->format(vdev_size);
-        vdev->open();
+    if (!pool->open()) {
+        uint64_t total_size = pool->get_total_blocks() * VDEV_BLOCK_SIZE;
+        // Pool couldn't open, so format all VDevs
+        std::cout << "Formatting VDEV pool (" << (total_size / (1024*1024)) << " MB across "
+                  << pool->get_vdev_count() << " device(s))..." << std::endl;
+        if (!pool->format()) {
+            std::cerr << "Failed to format pool." << std::endl;
+            return false;
+        }
         is_new = true;
     }
 
-    uint64_t total_blocks = vdev_size / VDEV_BLOCK_SIZE;
-    alloc = new BlockAllocator(vdev, total_blocks);
-
     if (is_new) {
-        alloc->init_empty();
+        pool->init_allocators();
         create_root();
     } else {
-        alloc->load();
+        pool->load_allocators();
         if (!load_uberblock()) {
             std::cerr << "Invalid uberblock magic. Re-formatting." << std::endl;
-            alloc->init_empty();
+            pool->init_allocators();
             create_root();
         }
     }
@@ -55,7 +67,7 @@ bool ZFS::mount() {
 
 bool ZFS::load_uberblock() {
     char buf[VDEV_BLOCK_SIZE];
-    vdev->read_block(0, buf);
+    pool->read_block(0, buf);
     memcpy(&uberblock, buf, sizeof(zfsl_uberblock));
     return uberblock.magic == ZFSL_MAGIC;
 }
@@ -64,7 +76,7 @@ bool ZFS::save_uberblock() {
     uberblock.txg++;
     char buf[VDEV_BLOCK_SIZE] = {0};
     memcpy(buf, &uberblock, sizeof(zfsl_uberblock));
-    return vdev->write_block(0, buf);
+    return pool->write_block(0, buf);
 }
 
 bool ZFS::create_root() {
@@ -72,7 +84,7 @@ bool ZFS::create_root() {
     uberblock.txg = 0; // save_uberblock will increment to 1
     uberblock.snapshot_count = 0;
 
-    uberblock.root_blk = alloc->alloc_block();
+    uberblock.root_blk = pool->alloc_block();
 
     zfsl_dnode root = {};
     root.type  = ZFSL_DNODE_DIR;
@@ -82,7 +94,7 @@ bool ZFS::create_root() {
     write_dnode(uberblock.root_blk, &root);
     compute_sha256(&root, sizeof(zfsl_dnode), uberblock.root_hash);
 
-    alloc->save();
+    pool->save_allocators();
     return save_uberblock();
 }
 
@@ -92,7 +104,7 @@ bool ZFS::create_root() {
 
 bool ZFS::read_dnode(uint64_t blk_no, zfsl_dnode* dnode) {
     char buf[VDEV_BLOCK_SIZE];
-    if (!vdev->read_block(blk_no, buf)) return false;
+    if (!pool->read_block(blk_no, buf)) return false;
     memcpy(dnode, buf, sizeof(zfsl_dnode));
     return true;
 }
@@ -100,7 +112,7 @@ bool ZFS::read_dnode(uint64_t blk_no, zfsl_dnode* dnode) {
 bool ZFS::write_dnode(uint64_t blk_no, const zfsl_dnode* dnode) {
     char buf[VDEV_BLOCK_SIZE] = {0};
     memcpy(buf, dnode, sizeof(zfsl_dnode));
-    return vdev->write_block(blk_no, buf);
+    return pool->write_block(blk_no, buf);
 }
 
 std::vector<std::string> ZFS::split_path(const std::string& path) {
@@ -114,7 +126,7 @@ std::vector<std::string> ZFS::split_path(const std::string& path) {
 }
 
 void ZFS::cow_free_block(uint64_t blk_no) {
-    alloc->dec_ref(blk_no);
+    pool->dec_ref(blk_no);
 }
 
 bool ZFS::entry_exists(const zfsl_dnode& dir, const std::string& name) {
@@ -125,7 +137,7 @@ bool ZFS::entry_exists(const zfsl_dnode& dir, const std::string& name) {
         if (dir.direct[i].blk_no == 0) continue;
         
         char buf[VDEV_BLOCK_SIZE];
-        vdev->read_block(dir.direct[i].blk_no, buf);
+        pool->read_block(dir.direct[i].blk_no, buf);
         
         int start_idx = i * max_per_blk;
         int blk_entries = total_entries - start_idx;
@@ -169,7 +181,7 @@ uint64_t ZFS::resolve_path(const std::string& path, zfsl_dnode* out,
             if (db == 0) continue;
 
             char buf[VDEV_BLOCK_SIZE];
-            if (!vdev->read_block(db, buf)) continue;
+            if (!pool->read_block(db, buf)) continue;
             int total_entries = out->size / sizeof(zfsl_dirent);
             int max_per_blk = VDEV_BLOCK_SIZE / sizeof(zfsl_dirent);
             int start_idx = i * max_per_blk;
@@ -200,7 +212,7 @@ uint64_t ZFS::resolve_path_public(const std::string& path, zfsl_dnode* out) {
     return resolve_path(path, out);
 }
 
-// CoW propagation — walk from leaf to root
+// CoW propagation Ã¢â‚¬â€ walk from leaf to root
 
 void ZFS::cow_propagate(std::vector<PathNode>& trace, zfsl_dnode& leaf) {
     zfsl_dnode cur = leaf;
@@ -210,7 +222,7 @@ void ZFS::cow_propagate(std::vector<PathNode>& trace, zfsl_dnode& leaf) {
         PathNode& node = trace[i];
 
         // 1. CoW this dnode to a fresh block
-        uint64_t new_blk = alloc->alloc_block();
+        uint64_t new_blk = pool->alloc_block();
         if (new_blk == 0) { std::cerr << "ENOSPC during cow_propagate" << std::endl; return; }
         write_dnode(new_blk, &cur);
         deferred_frees.push_back(node.dnode_blk);   // defer free
@@ -226,13 +238,13 @@ void ZFS::cow_propagate(std::vector<PathNode>& trace, zfsl_dnode& leaf) {
         PathNode& parent = trace[i - 1];
 
         uint64_t old_db = node.dirent_blk;
-        uint64_t new_db = alloc->alloc_block();
+        uint64_t new_db = pool->alloc_block();
         if (new_db == 0) { std::cerr << "ENOSPC during cow_propagate" << std::endl; return; }
 
         char d_buf[VDEV_BLOCK_SIZE];
-        vdev->read_block(old_db, d_buf);
+        pool->read_block(old_db, d_buf);
         ((zfsl_dirent*)d_buf)[node.dirent_idx].dnode_blk = new_blk;
-        vdev->write_block(new_db, d_buf);
+        pool->write_block(new_db, d_buf);
 
         // Update parent dnode's direct[] slot that held old_db
         for (int s = 0; s < ZFSL_DIRECT_BLKS; ++s) {
@@ -295,7 +307,7 @@ int ZFS::readdir(const char *path, void *buf, void *filler_ptr) {
     for (int i = 0; i < ZFSL_DIRECT_BLKS; ++i) {
         if (dn.direct[i].blk_no == 0) continue;
         char blk[VDEV_BLOCK_SIZE];
-        vdev->read_block(dn.direct[i].blk_no, blk);
+        pool->read_block(dn.direct[i].blk_no, blk);
         
         int start_idx = i * max_per_blk;
         int blk_entries = total_entries - start_idx;
@@ -331,7 +343,7 @@ int ZFS::mkdir(const char *path, mode_t mode) {
     if (entry_exists(par, name)) return -EEXIST;
 
     // Allocate new directory dnode
-    uint64_t child_blk = alloc->alloc_block();
+    uint64_t child_blk = pool->alloc_block();
     if (child_blk == 0) return -ENOSPC;
     zfsl_dnode child = {};
     child.type  = ZFSL_DNODE_DIR;
@@ -354,16 +366,16 @@ int ZFS::mkdir(const char *path, mode_t mode) {
     uint64_t old_db = par.direct[target_b].blk_no;
 
     if (!new_dirent_needed)
-        vdev->read_block(old_db, dbuf);
+        pool->read_block(old_db, dbuf);
 
     zfsl_dirent* d = (zfsl_dirent*)dbuf;
     d[target_idx].dnode_blk = child_blk;
     strncpy(d[target_idx].name, name.c_str(), 247);
     d[target_idx].name[247] = '\0';
 
-    uint64_t new_db = alloc->alloc_block();
+    uint64_t new_db = pool->alloc_block();
     if (new_db == 0) { cow_free_block(child_blk); return -ENOSPC; }
-    vdev->write_block(new_db, dbuf);
+    pool->write_block(new_db, dbuf);
     compute_sha256(dbuf, VDEV_BLOCK_SIZE, par.direct[target_b].hash);
     par.direct[target_b].blk_no = new_db;
     if (!new_dirent_needed) cow_free_block(old_db);
@@ -372,7 +384,7 @@ int ZFS::mkdir(const char *path, mode_t mode) {
     par.mtime = current_time();
 
     cow_propagate(trace, par);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
@@ -395,7 +407,7 @@ int ZFS::create(const char *path, mode_t mode) {
     if (entry_exists(par, name)) return -EEXIST;
 
     // Allocate new file dnode
-    uint64_t child_blk = alloc->alloc_block();
+    uint64_t child_blk = pool->alloc_block();
     if (child_blk == 0) return -ENOSPC;
     zfsl_dnode child = {};
     child.type  = ZFSL_DNODE_FILE;
@@ -418,16 +430,16 @@ int ZFS::create(const char *path, mode_t mode) {
     uint64_t old_db = par.direct[target_b].blk_no;
 
     if (!new_dirent_needed)
-        vdev->read_block(old_db, dbuf);
+        pool->read_block(old_db, dbuf);
 
     zfsl_dirent* d = (zfsl_dirent*)dbuf;
     d[target_idx].dnode_blk = child_blk;
     strncpy(d[target_idx].name, name.c_str(), 247);
     d[target_idx].name[247] = '\0';
 
-    uint64_t new_db = alloc->alloc_block();
+    uint64_t new_db = pool->alloc_block();
     if (new_db == 0) { cow_free_block(child_blk); return -ENOSPC; }
-    vdev->write_block(new_db, dbuf);
+    pool->write_block(new_db, dbuf);
     compute_sha256(dbuf, VDEV_BLOCK_SIZE, par.direct[target_b].hash);
     par.direct[target_b].blk_no = new_db;
     if (!new_dirent_needed) cow_free_block(old_db);
@@ -436,7 +448,7 @@ int ZFS::create(const char *path, mode_t mode) {
     par.mtime = current_time();
 
     cow_propagate(trace, par);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
@@ -477,7 +489,7 @@ int ZFS::read(const char *path, char *buf, size_t size, off_t offset) {
             target_hash = dn.direct[b].hash;
         } else {
             if (!indirect_loaded && dn.indirect.blk_no != 0) {
-                vdev->read_block(dn.indirect.blk_no, indirect_buf);
+                pool->read_block(dn.indirect.blk_no, indirect_buf);
                 uint8_t h[32];
                 compute_sha256(indirect_buf, VDEV_BLOCK_SIZE, h);
                 if (memcmp(h, dn.indirect.hash, 32) != 0) {
@@ -499,7 +511,7 @@ int ZFS::read(const char *path, char *buf, size_t size, off_t offset) {
         }
 
         char blk[VDEV_BLOCK_SIZE];
-        vdev->read_block(target_blk, blk);
+        pool->read_block(target_blk, blk);
 
         // Merkle integrity check
         uint8_t h[32];
@@ -539,7 +551,7 @@ int ZFS::write(const char *path, const char *buf, size_t size, off_t offset) {
     bool indirect_dirty = false;
     
     if (end_b >= ZFSL_DIRECT_BLKS && dn.indirect.blk_no != 0) {
-        vdev->read_block(dn.indirect.blk_no, indirect_buf);
+        pool->read_block(dn.indirect.blk_no, indirect_buf);
     }
 
     for (uint64_t b = start_b; b <= end_b; ++b) {
@@ -559,15 +571,15 @@ int ZFS::write(const char *path, const char *buf, size_t size, off_t offset) {
 
         // Preserve existing data for partial-block writes
         if (old_blk != 0 && (copy_from > 0 || copy_to < VDEV_BLOCK_SIZE))
-            vdev->read_block(old_blk, blk);
+            pool->read_block(old_blk, blk);
 
         uint64_t src_off = blk_off + copy_from - offset;
         memcpy(blk + copy_from, buf + src_off, len);
 
         // CoW: new block
-        uint64_t new_blk = alloc->alloc_block();
+        uint64_t new_blk = pool->alloc_block();
         if (new_blk == 0) return -ENOSPC;
-        vdev->write_block(new_blk, blk);
+        pool->write_block(new_blk, blk);
         
         if (b < ZFSL_DIRECT_BLKS) {
             compute_sha256(blk, VDEV_BLOCK_SIZE, dn.direct[b].hash);
@@ -582,9 +594,9 @@ int ZFS::write(const char *path, const char *buf, size_t size, off_t offset) {
     }
 
     if (indirect_dirty) {
-        uint64_t new_indirect = alloc->alloc_block();
+        uint64_t new_indirect = pool->alloc_block();
         if (new_indirect == 0) return -ENOSPC;
-        vdev->write_block(new_indirect, indirect_buf);
+        pool->write_block(new_indirect, indirect_buf);
         compute_sha256(indirect_buf, VDEV_BLOCK_SIZE, dn.indirect.hash);
         if (dn.indirect.blk_no != 0) cow_free_block(dn.indirect.blk_no);
         dn.indirect.blk_no = new_indirect;
@@ -594,14 +606,14 @@ int ZFS::write(const char *path, const char *buf, size_t size, off_t offset) {
     dn.mtime = current_time();
 
     cow_propagate(trace, dn);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return (int)size;
 }
 
 void ZFS::get_space_info(uint64_t* total_blocks, uint64_t* free_blocks) {
-    if (alloc) {
-        alloc->get_stats(total_blocks, free_blocks);
+    if (pool) {
+        pool->get_stats(total_blocks, free_blocks);
     } else {
         if (total_blocks) *total_blocks = 0;
         if (free_blocks) *free_blocks = 0;
@@ -635,7 +647,7 @@ int ZFS::unlink(const char *path) {
     for (int b = 0; b < ZFSL_DIRECT_BLKS; ++b) {
         if (par.direct[b].blk_no == 0) continue;
         char dbuf[VDEV_BLOCK_SIZE];
-        vdev->read_block(par.direct[b].blk_no, dbuf);
+        pool->read_block(par.direct[b].blk_no, dbuf);
         int blk_entries = total_entries - (b * max_per_blk);
         if (blk_entries > max_per_blk) blk_entries = max_per_blk;
         if (blk_entries <= 0) continue;
@@ -664,7 +676,7 @@ int ZFS::unlink(const char *path) {
         
     if (target.indirect.blk_no) {
         char indirect_buf[VDEV_BLOCK_SIZE];
-        vdev->read_block(target.indirect.blk_no, indirect_buf);
+        pool->read_block(target.indirect.blk_no, indirect_buf);
         zfsl_blkptr* indirect_ptrs = (zfsl_blkptr*)indirect_buf;
         int indirect_capacity = VDEV_BLOCK_SIZE / sizeof(zfsl_blkptr);
         for (int i = 0; i < indirect_capacity; ++i) {
@@ -680,7 +692,7 @@ int ZFS::unlink(const char *path) {
     int last_j = last_global % max_per_blk;
     
     char found_buf[VDEV_BLOCK_SIZE];
-    vdev->read_block(par.direct[found_b].blk_no, found_buf);
+    pool->read_block(par.direct[found_b].blk_no, found_buf);
     
     if (found_b == last_b) {
         zfsl_dirent* d_fb = (zfsl_dirent*)found_buf;
@@ -688,8 +700,8 @@ int ZFS::unlink(const char *path) {
         memset(&d_fb[last_j], 0, sizeof(zfsl_dirent));
         
         uint64_t old_db = par.direct[found_b].blk_no;
-        uint64_t new_db = alloc->alloc_block();
-        vdev->write_block(new_db, found_buf);
+        uint64_t new_db = pool->alloc_block();
+        pool->write_block(new_db, found_buf);
         compute_sha256(found_buf, VDEV_BLOCK_SIZE, par.direct[found_b].hash);
         par.direct[found_b].blk_no = new_db;
         cow_free_block(old_db);
@@ -701,7 +713,7 @@ int ZFS::unlink(const char *path) {
         }
     } else {
         char last_buf[VDEV_BLOCK_SIZE];
-        vdev->read_block(par.direct[last_b].blk_no, last_buf);
+        pool->read_block(par.direct[last_b].blk_no, last_buf);
         zfsl_dirent* d_found = (zfsl_dirent*)found_buf;
         zfsl_dirent* d_last  = (zfsl_dirent*)last_buf;
         
@@ -709,8 +721,8 @@ int ZFS::unlink(const char *path) {
         memset(&d_last[last_j], 0, sizeof(zfsl_dirent));
         
         uint64_t old_found_db = par.direct[found_b].blk_no;
-        uint64_t new_found_db = alloc->alloc_block();
-        vdev->write_block(new_found_db, found_buf);
+        uint64_t new_found_db = pool->alloc_block();
+        pool->write_block(new_found_db, found_buf);
         compute_sha256(found_buf, VDEV_BLOCK_SIZE, par.direct[found_b].hash);
         par.direct[found_b].blk_no = new_found_db;
         cow_free_block(old_found_db);
@@ -721,8 +733,8 @@ int ZFS::unlink(const char *path) {
             par.direct[last_b].blk_no = 0;
             memset(par.direct[last_b].hash, 0, 32);
         } else {
-            uint64_t new_last_db = alloc->alloc_block();
-            vdev->write_block(new_last_db, last_buf);
+            uint64_t new_last_db = pool->alloc_block();
+            pool->write_block(new_last_db, last_buf);
             compute_sha256(last_buf, VDEV_BLOCK_SIZE, par.direct[last_b].hash);
             par.direct[last_b].blk_no = new_last_db;
             cow_free_block(old_last_db);
@@ -733,7 +745,7 @@ int ZFS::unlink(const char *path) {
     par.mtime = current_time();
 
     cow_propagate(trace, par);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
@@ -766,7 +778,7 @@ int ZFS::rmdir(const char *path) {
     for (int b = 0; b < ZFSL_DIRECT_BLKS; ++b) {
         if (par.direct[b].blk_no == 0) continue;
         char dbuf[VDEV_BLOCK_SIZE];
-        vdev->read_block(par.direct[b].blk_no, dbuf);
+        pool->read_block(par.direct[b].blk_no, dbuf);
         int blk_entries = total_entries - (b * max_per_blk);
         if (blk_entries > max_per_blk) blk_entries = max_per_blk;
         if (blk_entries <= 0) continue;
@@ -799,7 +811,7 @@ int ZFS::rmdir(const char *path) {
     int last_j = last_global % max_per_blk;
     
     char found_buf[VDEV_BLOCK_SIZE];
-    vdev->read_block(par.direct[found_b].blk_no, found_buf);
+    pool->read_block(par.direct[found_b].blk_no, found_buf);
     
     if (found_b == last_b) {
         zfsl_dirent* d_fb = (zfsl_dirent*)found_buf;
@@ -807,8 +819,8 @@ int ZFS::rmdir(const char *path) {
         memset(&d_fb[last_j], 0, sizeof(zfsl_dirent));
         
         uint64_t old_db = par.direct[found_b].blk_no;
-        uint64_t new_db = alloc->alloc_block();
-        vdev->write_block(new_db, found_buf);
+        uint64_t new_db = pool->alloc_block();
+        pool->write_block(new_db, found_buf);
         compute_sha256(found_buf, VDEV_BLOCK_SIZE, par.direct[found_b].hash);
         par.direct[found_b].blk_no = new_db;
         cow_free_block(old_db);
@@ -820,7 +832,7 @@ int ZFS::rmdir(const char *path) {
         }
     } else {
         char last_buf[VDEV_BLOCK_SIZE];
-        vdev->read_block(par.direct[last_b].blk_no, last_buf);
+        pool->read_block(par.direct[last_b].blk_no, last_buf);
         zfsl_dirent* d_found = (zfsl_dirent*)found_buf;
         zfsl_dirent* d_last  = (zfsl_dirent*)last_buf;
         
@@ -828,8 +840,8 @@ int ZFS::rmdir(const char *path) {
         memset(&d_last[last_j], 0, sizeof(zfsl_dirent));
         
         uint64_t old_found_db = par.direct[found_b].blk_no;
-        uint64_t new_found_db = alloc->alloc_block();
-        vdev->write_block(new_found_db, found_buf);
+        uint64_t new_found_db = pool->alloc_block();
+        pool->write_block(new_found_db, found_buf);
         compute_sha256(found_buf, VDEV_BLOCK_SIZE, par.direct[found_b].hash);
         par.direct[found_b].blk_no = new_found_db;
         cow_free_block(old_found_db);
@@ -840,8 +852,8 @@ int ZFS::rmdir(const char *path) {
             par.direct[last_b].blk_no = 0;
             memset(par.direct[last_b].hash, 0, 32);
         } else {
-            uint64_t new_last_db = alloc->alloc_block();
-            vdev->write_block(new_last_db, last_buf);
+            uint64_t new_last_db = pool->alloc_block();
+            pool->write_block(new_last_db, last_buf);
             compute_sha256(last_buf, VDEV_BLOCK_SIZE, par.direct[last_b].hash);
             par.direct[last_b].blk_no = new_last_db;
             cow_free_block(old_last_db);
@@ -852,7 +864,7 @@ int ZFS::rmdir(const char *path) {
     par.mtime = current_time();
 
     cow_propagate(trace, par);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
@@ -881,7 +893,7 @@ int ZFS::truncate(const char *path, off_t new_size) {
     bool indirect_loaded = false;
 
     if (first_to_free < ZFSL_DIRECT_BLKS + indirect_capacity && dn.indirect.blk_no != 0) {
-        vdev->read_block(dn.indirect.blk_no, indirect_buf);
+        pool->read_block(dn.indirect.blk_no, indirect_buf);
         indirect_loaded = true;
     }
 
@@ -913,8 +925,8 @@ int ZFS::truncate(const char *path, off_t new_size) {
             dn.indirect.blk_no = 0;
             memset(dn.indirect.hash, 0, 32);
         } else {
-            uint64_t new_indirect = alloc->alloc_block();
-            vdev->write_block(new_indirect, indirect_buf);
+            uint64_t new_indirect = pool->alloc_block();
+            pool->write_block(new_indirect, indirect_buf);
             compute_sha256(indirect_buf, VDEV_BLOCK_SIZE, dn.indirect.hash);
             cow_free_block(dn.indirect.blk_no);
             dn.indirect.blk_no = new_indirect;
@@ -925,7 +937,7 @@ int ZFS::truncate(const char *path, off_t new_size) {
     dn.mtime = current_time();
 
     cow_propagate(trace, dn);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
@@ -945,7 +957,7 @@ int ZFS::take_snapshot() {
 
     // Increment reference counts for the entire tree
     inc_tree_refcounts(uberblock.root_blk);
-    alloc->save();
+    pool->save_allocators();
 
     save_uberblock();
     return 0;
@@ -982,7 +994,7 @@ int ZFS::delete_snapshot(uint64_t txg) {
             }
             uberblock.snapshot_count--;
             
-            alloc->save();
+            pool->save_allocators();
             save_uberblock();
             return 0;
         }
@@ -995,7 +1007,7 @@ int ZFS::delete_snapshot(uint64_t txg) {
 
 
 int ZFS::fsync(const char *path) {
-    vdev->sync();
+    pool->sync();
     return 0;
 }
 
@@ -1008,7 +1020,7 @@ int ZFS::chmod(const char *path, mode_t mode) {
     dn.ctime = current_time();
     cow_propagate(trace, dn);
 
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
@@ -1022,17 +1034,17 @@ int ZFS::chown(const char *path, uint32_t uid, uint32_t gid) {
     if (gid != (uint32_t)-1) dn.gid = gid;
     dn.ctime = current_time();
     cow_propagate(trace, dn);
-    alloc->save();
+    pool->save_allocators();
     save_uberblock();
     return 0;
 }
 
-static void traverse_tree_refcounts(BlockAllocator* alloc, VDev* vdev, uint64_t dn_blk, bool inc) {
+static void traverse_tree_refcounts(ZPool* pool, uint64_t dn_blk, bool inc) {
     if (dn_blk == 0) return;
-    if (inc) alloc->inc_ref(dn_blk); else alloc->dec_ref(dn_blk);
+    if (inc) pool->inc_ref(dn_blk); else pool->dec_ref(dn_blk);
 
     char node_buf[VDEV_BLOCK_SIZE];
-    if (!vdev->read_block(dn_blk, node_buf)) return;
+    if (!pool->read_block(dn_blk, node_buf)) return;
     zfsl_dnode dn;
     memcpy(&dn, node_buf, sizeof(zfsl_dnode));
 
@@ -1042,15 +1054,15 @@ static void traverse_tree_refcounts(BlockAllocator* alloc, VDev* vdev, uint64_t 
 
     for (int i = 0; i < ZFSL_DIRECT_BLKS; ++i) {
         if (dn.direct[i].blk_no) {
-            if (inc) alloc->inc_ref(dn.direct[i].blk_no); else alloc->dec_ref(dn.direct[i].blk_no);
+            if (inc) pool->inc_ref(dn.direct[i].blk_no); else pool->dec_ref(dn.direct[i].blk_no);
             
             if (dn.type == ZFSL_DNODE_DIR && entries_processed < total_entries) {
                 char dbuf[VDEV_BLOCK_SIZE];
-                vdev->read_block(dn.direct[i].blk_no, dbuf);
+                pool->read_block(dn.direct[i].blk_no, dbuf);
                 zfsl_dirent* d = (zfsl_dirent*)dbuf;
                 int to_process = std::min(max_per_blk, total_entries - entries_processed);
                 for (int j = 0; j < to_process; ++j) {
-                    if (d[j].dnode_blk) traverse_tree_refcounts(alloc, vdev, d[j].dnode_blk, inc);
+                    if (d[j].dnode_blk) traverse_tree_refcounts(pool, d[j].dnode_blk, inc);
                 }
                 entries_processed += to_process;
             }
@@ -1058,23 +1070,23 @@ static void traverse_tree_refcounts(BlockAllocator* alloc, VDev* vdev, uint64_t 
     }
 
     if (dn.indirect.blk_no) {
-        if (inc) alloc->inc_ref(dn.indirect.blk_no); else alloc->dec_ref(dn.indirect.blk_no);
+        if (inc) pool->inc_ref(dn.indirect.blk_no); else pool->dec_ref(dn.indirect.blk_no);
         char ibuf[VDEV_BLOCK_SIZE];
-        vdev->read_block(dn.indirect.blk_no, ibuf);
+        pool->read_block(dn.indirect.blk_no, ibuf);
         zfsl_blkptr* p = (zfsl_blkptr*)ibuf;
         int max_p = VDEV_BLOCK_SIZE / sizeof(zfsl_blkptr);
         
         for (int i = 0; i < max_p; ++i) {
             if (p[i].blk_no) {
-                if (inc) alloc->inc_ref(p[i].blk_no); else alloc->dec_ref(p[i].blk_no);
+                if (inc) pool->inc_ref(p[i].blk_no); else pool->dec_ref(p[i].blk_no);
                 
                 if (dn.type == ZFSL_DNODE_DIR && entries_processed < total_entries) {
                     char dbuf[VDEV_BLOCK_SIZE];
-                    vdev->read_block(p[i].blk_no, dbuf);
+                    pool->read_block(p[i].blk_no, dbuf);
                     zfsl_dirent* d = (zfsl_dirent*)dbuf;
                     int to_process = std::min(max_per_blk, total_entries - entries_processed);
                     for (int j = 0; j < to_process; ++j) {
-                        if (d[j].dnode_blk) traverse_tree_refcounts(alloc, vdev, d[j].dnode_blk, inc);
+                        if (d[j].dnode_blk) traverse_tree_refcounts(pool, d[j].dnode_blk, inc);
                     }
                     entries_processed += to_process;
                 }
@@ -1084,11 +1096,11 @@ static void traverse_tree_refcounts(BlockAllocator* alloc, VDev* vdev, uint64_t 
 }
 
 void ZFS::inc_tree_refcounts(uint64_t dn_blk) {
-    traverse_tree_refcounts(alloc, vdev, dn_blk, true);
+    traverse_tree_refcounts(pool, dn_blk, true);
 }
 
 void ZFS::dec_tree_refcounts(uint64_t dn_blk) {
-    traverse_tree_refcounts(alloc, vdev, dn_blk, false);
+    traverse_tree_refcounts(pool, dn_blk, false);
 }
 
 int ZFS::rename(const char *oldpath, const char *newpath) {
@@ -1121,7 +1133,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
     for (int b = 0; b < ZFSL_DIRECT_BLKS; ++b) {
         if (opar.direct[b].blk_no == 0) continue;
         char dbuf[VDEV_BLOCK_SIZE];
-        vdev->read_block(opar.direct[b].blk_no, dbuf);
+        pool->read_block(opar.direct[b].blk_no, dbuf);
         int bentries = std::min(max_per_blk, ototal - (b * max_per_blk));
         zfsl_dirent* d = (zfsl_dirent*)dbuf;
         for (int j = 0; j < bentries; ++j) {
@@ -1153,7 +1165,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
         for (int b = 0; b < ZFSL_DIRECT_BLKS; ++b) {
             if (opar.direct[b].blk_no == 0) continue;
             char dbuf[VDEV_BLOCK_SIZE];
-            vdev->read_block(opar.direct[b].blk_no, dbuf);
+            pool->read_block(opar.direct[b].blk_no, dbuf);
             int bentries = std::min(max_per_blk, ototal - (b * max_per_blk));
             zfsl_dirent* d = (zfsl_dirent*)dbuf;
             for (int j = 0; j < bentries; ++j) {
@@ -1169,22 +1181,22 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
     if (opar_blk == npar_blk) {
         // Same directory, just update name in dirent block
         char dbuf[VDEV_BLOCK_SIZE];
-        vdev->read_block(opar.direct[ob].blk_no, dbuf);
+        pool->read_block(opar.direct[ob].blk_no, dbuf);
         zfsl_dirent* d = (zfsl_dirent*)dbuf;
         strncpy(d[oj].name, nname.c_str(), 247);
         d[oj].name[247] = '\0';
         
         uint64_t old_db = opar.direct[ob].blk_no;
-        uint64_t new_db = alloc->alloc_block();
+        uint64_t new_db = pool->alloc_block();
         if (new_db == 0) return -ENOSPC;
-        vdev->write_block(new_db, dbuf);
+        pool->write_block(new_db, dbuf);
         compute_sha256(dbuf, VDEV_BLOCK_SIZE, opar.direct[ob].hash);
         opar.direct[ob].blk_no = new_db;
         cow_free_block(old_db);
 
         opar.mtime = current_time();
         cow_propagate(trace_old, opar);
-        alloc->save(); save_uberblock();
+        pool->save_allocators(); save_uberblock();
         return 0;
     } else {
         // Cross directory
@@ -1194,14 +1206,14 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
         int nj = ntotal % max_per_blk;
         
         char nbuf[VDEV_BLOCK_SIZE] = {0};
-        if (npar.direct[nb].blk_no) vdev->read_block(npar.direct[nb].blk_no, nbuf);
+        if (npar.direct[nb].blk_no) pool->read_block(npar.direct[nb].blk_no, nbuf);
         zfsl_dirent* d = (zfsl_dirent*)nbuf;
         d[nj].dnode_blk = target_blk;
         strncpy(d[nj].name, nname.c_str(), 247);
         
         uint64_t old_ndb = npar.direct[nb].blk_no;
-        uint64_t new_ndb = alloc->alloc_block();
-        vdev->write_block(new_ndb, nbuf);
+        uint64_t new_ndb = pool->alloc_block();
+        pool->write_block(new_ndb, nbuf);
         compute_sha256(nbuf, VDEV_BLOCK_SIZE, npar.direct[nb].hash);
         npar.direct[nb].blk_no = new_ndb;
         if (old_ndb) cow_free_block(old_ndb);
@@ -1209,7 +1221,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
         npar.size += sizeof(zfsl_dirent);
         npar.mtime = current_time();
         cow_propagate(trace_new, npar);
-        alloc->save(); save_uberblock();
+        pool->save_allocators(); save_uberblock();
 
         // Trans 2: Remove from opar. Must re-resolve opar!
         trace_old.clear();
@@ -1221,7 +1233,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
         for (int b = 0; b < ZFSL_DIRECT_BLKS; ++b) {
             if (opar.direct[b].blk_no == 0) continue;
             char dbuf[VDEV_BLOCK_SIZE];
-            vdev->read_block(opar.direct[b].blk_no, dbuf);
+            pool->read_block(opar.direct[b].blk_no, dbuf);
             int bentries = std::min(max_per_blk, ototal - (b * max_per_blk));
             zfsl_dirent* dx = (zfsl_dirent*)dbuf;
             for (int j = 0; j < bentries; ++j) {
@@ -1237,7 +1249,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
         int last_j = last_global % max_per_blk;
         
         char found_buf[VDEV_BLOCK_SIZE];
-        vdev->read_block(opar.direct[ob].blk_no, found_buf);
+        pool->read_block(opar.direct[ob].blk_no, found_buf);
         
         if (ob == last_b) {
             zfsl_dirent* d_fb = (zfsl_dirent*)found_buf;
@@ -1245,8 +1257,8 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
             memset(&d_fb[last_j], 0, sizeof(zfsl_dirent));
             
             uint64_t old_db = opar.direct[ob].blk_no;
-            uint64_t new_db = alloc->alloc_block();
-            vdev->write_block(new_db, found_buf);
+            uint64_t new_db = pool->alloc_block();
+            pool->write_block(new_db, found_buf);
             compute_sha256(found_buf, VDEV_BLOCK_SIZE, opar.direct[ob].hash);
             opar.direct[ob].blk_no = new_db;
             cow_free_block(old_db);
@@ -1258,7 +1270,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
             }
         } else {
             char last_buf[VDEV_BLOCK_SIZE];
-            vdev->read_block(opar.direct[last_b].blk_no, last_buf);
+            pool->read_block(opar.direct[last_b].blk_no, last_buf);
             zfsl_dirent* d_found = (zfsl_dirent*)found_buf;
             zfsl_dirent* d_last  = (zfsl_dirent*)last_buf;
             
@@ -1266,8 +1278,8 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
             memset(&d_last[last_j], 0, sizeof(zfsl_dirent));
             
             uint64_t old_found_db = opar.direct[ob].blk_no;
-            uint64_t new_found_db = alloc->alloc_block();
-            vdev->write_block(new_found_db, found_buf);
+            uint64_t new_found_db = pool->alloc_block();
+            pool->write_block(new_found_db, found_buf);
             compute_sha256(found_buf, VDEV_BLOCK_SIZE, opar.direct[ob].hash);
             opar.direct[ob].blk_no = new_found_db;
             cow_free_block(old_found_db);
@@ -1278,8 +1290,8 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
                 opar.direct[last_b].blk_no = 0;
                 memset(opar.direct[last_b].hash, 0, 32);
             } else {
-                uint64_t new_last_db = alloc->alloc_block();
-                vdev->write_block(new_last_db, last_buf);
+                uint64_t new_last_db = pool->alloc_block();
+                pool->write_block(new_last_db, last_buf);
                 compute_sha256(last_buf, VDEV_BLOCK_SIZE, opar.direct[last_b].hash);
                 opar.direct[last_b].blk_no = new_last_db;
                 cow_free_block(old_last_db);
@@ -1289,7 +1301,7 @@ int ZFS::rename(const char *oldpath, const char *newpath) {
         opar.size -= sizeof(zfsl_dirent);
         opar.mtime = current_time();
         cow_propagate(trace_old, opar);
-        alloc->save(); save_uberblock();
+        pool->save_allocators(); save_uberblock();
         return 0;
     }
 }

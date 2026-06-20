@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.5.2)  20 JUN 2026 06:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.5.2)  20 JUN 2026 07:23
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -754,10 +754,10 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [6]
-<merkle-tree.jpg, id=262, 1606.0pt x 1467.4825pt>
+<merkle-tree.jpg, id=263, 1606.0pt x 1467.4825pt>
 File: merkle-tree.jpg Graphic file (type jpg)
 <use merkle-tree.jpg>
-Package pdftex.def Info: merkle-tree.jpg  used on input line 303.
+Package pdftex.def Info: merkle-tree.jpg  used on input line 292.
 (pdftex.def)             Requested size: 260.39886pt x 237.93687pt.
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
@@ -769,7 +769,7 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.308 \clearpage
+l.297 \clearpage
                  <./merkle-tree.jpg>]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
@@ -785,7 +785,7 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [12]
-Underfull \hbox (badness 10000) in paragraph at lines 497--498
+Underfull \hbox (badness 10000) in paragraph at lines 486--487
 []\OT1/cmr/m/n/10 Figure [][]1[][] Source: [][]$https : / / medium . com / @aannkkiittaa /
  []
 
@@ -806,17 +806,17 @@ Package rerunfilecheck Info: File `sn-article.out' has not changed.
 (rerunfilecheck)             Checksum: 19513E11A165757FA0FBED6B58C61B2D;3969.
  ) 
 Here is how much of TeX's memory you used:
- 15409 strings out of 467691
- 235337 string characters out of 5414988
- 1062655 words of memory out of 5000000
- 43946 multiletter control sequences out of 15000+600000
+ 15393 strings out of 467691
+ 235065 string characters out of 5414988
+ 1139655 words of memory out of 5000000
+ 43941 multiletter control sequences out of 15000+600000
  651134 words of font info for 132 fonts, out of 8000000 for 9000
  1151 hyphenation exceptions out of 8191
  90i,8n,93p,877b,2177s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\blapt\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi602\tcrm1000.pk><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbsy10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmbsy7.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx8.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmitt10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb><C:/Users/blapt/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt8.pfb>
-Output written on sn-article.pdf (13 pages, 436022 bytes).
+Output written on sn-article.pdf (13 pages, 433540 bytes).
 PDF statistics:
- 555 PDF objects out of 1000 (max. 8388607)
- 276 named destinations out of 1000 (max. 500000)
+ 543 PDF objects out of 1000 (max. 8388607)
+ 265 named destinations out of 1000 (max. 500000)
  182 words of extra memory for PDF output out of 10000 (max. 10000000)
 

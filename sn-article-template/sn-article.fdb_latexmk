@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1781911733.20291 "c:/Git/zfs/sn-article-template/sn-article.tex" "sn-article.pdf" "sn-article" 1781911734.06613 0
+["pdflatex"] 1781915015.3901 "c:/Git/zfs/sn-article-template/sn-article.tex" "sn-article.pdf" "sn-article" 1781915016.22588 0
   "C:/Users/blapt/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1778191799 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/blapt/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi602/tcrm1000.pk" 1777716311 11548 b2fc00946c1acf09cf1a3ea1fc7aa740 ""
   "C:/Users/blapt/AppData/Local/MiKTeX/fonts/tfm/public/rsfs/rsfs10.tfm" 1777716307 688 37338d6ab346c2f1466b29e195316aa4 ""
@@ -149,11 +149,11 @@
   "C:/Users/blapt/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "C:/Users/blapt/AppData/Local/Programs/MiKTeX/tex/latex/wrapfig/wrapfig.sty" 1044403200 26220 3701aebf80ccdef248c0c20dd062fea9 ""
   "C:/Users/blapt/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1729265222 55384 b454dec21c2d9f45ec0b793f0995b992 ""
-  "c:/Git/zfs/sn-article-template/sn-article.tex" 1781911731 32771 5b69737301476e09e65d163cad220070 ""
+  "c:/Git/zfs/sn-article-template/sn-article.tex" 1781915013 32446 1fa3e99e98c28a28fd8a3addb78849e8 ""
   "merkle-tree.jpg" 1781905344 86643 94c95d920a2b427d952f35771b6eb653 ""
-  "sn-article.aux" 1781911733 5785 ac009c272acfdb13a63f5d5070f49873 "pdflatex"
-  "sn-article.out" 1781911733 3969 19513e11a165757fa0fbed6b58c61b2d "pdflatex"
-  "sn-article.tex" 1781911731 32771 5b69737301476e09e65d163cad220070 ""
+  "sn-article.aux" 1781915016 5785 2ef10349f884f3493d1b440aa046fcc4 "pdflatex"
+  "sn-article.out" 1781915016 3969 19513e11a165757fa0fbed6b58c61b2d "pdflatex"
+  "sn-article.tex" 1781915013 32446 1fa3e99e98c28a28fd8a3addb78849e8 ""
   "sn-jnl.cls" 1781784840 55857 c14ef9d34b3d95356940eaf177aff85f ""
   (generated)
   "sn-article.aux"

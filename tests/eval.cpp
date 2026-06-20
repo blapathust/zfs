@@ -353,6 +353,70 @@ int main() {
         std::cout << "   IOPS:       " << (int)(100.0 / secs) << std::endl;
     }
 
+    // ---------------------------------------------------------------
+    // 10. Multi-VDev Pooled Storage
+    // ---------------------------------------------------------------
+    std::cout << "\n10. Multi-VDev Pooled Storage (2 devices)..." << std::endl;
+    {
+        const std::string IMG_A = "test_pool_a.img";
+        const std::string IMG_B = "test_pool_b.img";
+        std::remove(IMG_A.c_str());
+        std::remove(IMG_B.c_str());
+
+        // Create a ZFS instance backed by TWO virtual devices
+        std::vector<std::string> pool_imgs = {IMG_A, IMG_B};
+        uint64_t per_dev_size = 64ULL * 1024 * 1024; // 64 MB each = 128 MB total
+        ZFS pool_zfs(pool_imgs, per_dev_size);
+        pool_zfs.mount();
+
+        // Create files and write data
+        int prc = pool_zfs.create("/pooled_file_1.txt", 0644);
+        check(prc == 0, "create /pooled_file_1.txt on pool");
+
+        prc = pool_zfs.create("/pooled_file_2.txt", 0644);
+        check(prc == 0, "create /pooled_file_2.txt on pool");
+
+        // Write distinct data to both files
+        char wbuf1[VDEV_BLOCK_SIZE], wbuf2[VDEV_BLOCK_SIZE];
+        memset(wbuf1, 'P', VDEV_BLOCK_SIZE);
+        memset(wbuf2, 'Q', VDEV_BLOCK_SIZE);
+        prc = pool_zfs.write("/pooled_file_1.txt", wbuf1, VDEV_BLOCK_SIZE, 0);
+        check(prc == VDEV_BLOCK_SIZE, "write to pooled file 1");
+
+        prc = pool_zfs.write("/pooled_file_2.txt", wbuf2, VDEV_BLOCK_SIZE, 0);
+        check(prc == VDEV_BLOCK_SIZE, "write to pooled file 2");
+
+        // Read back and verify integrity
+        char rbuf1[VDEV_BLOCK_SIZE] = {0}, rbuf2[VDEV_BLOCK_SIZE] = {0};
+        prc = pool_zfs.read("/pooled_file_1.txt", rbuf1, VDEV_BLOCK_SIZE, 0);
+        check(prc == VDEV_BLOCK_SIZE, "read pooled file 1");
+        check(rbuf1[0] == 'P' && rbuf1[4095] == 'P', "pooled file 1 data integrity");
+
+        prc = pool_zfs.read("/pooled_file_2.txt", rbuf2, VDEV_BLOCK_SIZE, 0);
+        check(prc == VDEV_BLOCK_SIZE, "read pooled file 2");
+        check(rbuf2[0] == 'Q' && rbuf2[4095] == 'Q', "pooled file 2 data integrity");
+
+        // Verify both image files exist (blocks spread across devices)
+        struct stat sa, sb;
+        bool a_exists = (::stat(IMG_A.c_str(), &sa) == 0 && sa.st_size > 0);
+        bool b_exists = (::stat(IMG_B.c_str(), &sb) == 0 && sb.st_size > 0);
+        check(a_exists && b_exists, "both VDev image files created");
+
+        // mkdir + snapshot on pool
+        prc = pool_zfs.mkdir("/pool_dir", 0755);
+        check(prc == 0, "mkdir on pooled storage");
+
+        prc = pool_zfs.take_snapshot();
+        check(prc == 0, "snapshot on pooled storage");
+
+        std::cout << "   Pool total capacity: "
+                  << (2 * per_dev_size / (1024*1024)) << " MB across 2 devices" << std::endl;
+
+        // Cleanup
+        std::remove(IMG_A.c_str());
+        std::remove(IMG_B.c_str());
+    }
+
     std::cout << "\n=== Evaluation complete ===" << std::endl;
     return 0;
 }

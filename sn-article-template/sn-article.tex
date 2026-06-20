@@ -149,46 +149,35 @@ Furthermore, the pooled storage model simplifies administration. Storage capacit
 
 In ZFSLite, we model this behavior through a \verb+ZPool+ class that manages a collection of Virtual Devices. When a dataset requests a block allocation, the pool dynamically determines the appropriate VDev based on available capacity and striping policies, rather than being bound to a fixed partition.
 
-\begin{lstlisting}[caption={Storage pool abstraction managing multiple virtual devices.}, label={lst:zpool}]
-class ZPool {
-private:
-    std::vector<std::unique_ptr<VDev>> vdevs;
-    uint64_t total_capacity;
-    uint64_t next_vdev_idx; // Used for round-robin striping
+\begin{lstlisting}[caption={Storage pool implementation: allocating and reading blocks.}, label={lst:zpool}]
+uint64_t ZPool::alloc_block() {
+    if (members.empty()) return 0;
 
-public:
-    void add_vdev(std::unique_ptr<VDev> vdev) {
-        total_capacity += vdev->get_capacity();
-        vdevs.push_back(std::move(vdev));
-    }
-
-    // Allocates a block dynamically from the aggregated pool
-    uint64_t allocate_block_from_pool() {
-        if (vdevs.empty()) return 0;
-        
-        // Simple round-robin striping allocator
-        for (size_t i = 0; i < vdevs.size(); ++i) {
-            uint64_t idx = (next_vdev_idx + i) % vdevs.size();
-            uint64_t blk = vdevs[idx]->alloc_block();
-            if (blk != 0) {
-                next_vdev_idx = (idx + 1) % vdevs.size();
-                // Return a globally unique block ID (VDev ID + Block Number)
-                return (idx << 48) | blk; 
-            }
+    // Round-robin across VDevs to stripe allocations
+    for (size_t attempt = 0; attempt < members.size(); ++attempt) {
+        size_t idx = (next_vdev_idx + attempt) % members.size();
+        uint64_t local_blk = members[idx].alloc->alloc_block();
+        if (local_blk != 0) {
+            next_vdev_idx = (idx + 1) % members.size();
+            return encode_block((uint16_t)idx, local_blk);
         }
-        return 0; // Pool is entirely full
     }
-    
-    // Routes I/O to the correct physical device
-    void read_block(uint64_t global_blk, char* buf) {
-        uint64_t vdev_idx = global_blk >> 48;
-        uint64_t local_blk = global_blk & 0x0000FFFFFFFFFFFF;
-        vdevs[vdev_idx]->read_block(local_blk, buf);
+    return 0; // All VDevs are full
+}
+
+bool ZPool::read_block(uint64_t global_blk, void* buffer) {
+    uint16_t vdev_idx;
+    uint64_t local_blk;
+    decode_block(global_blk, vdev_idx, local_blk);
+    if (vdev_idx >= members.size()) {
+        std::cerr << "[zpool] read_block: invalid vdev_idx=" << vdev_idx << std::endl;
+        return false;
     }
-};
+    return members[vdev_idx].vdev->read_block(local_blk, buffer);
+}
 \end{lstlisting}
 
-As demonstrated in Listing~\ref{lst:zpool}, the \verb+ZPool+ class abstracts the physical boundaries of individual drives. The \verb+allocate_block_from_pool+ method employs a round-robin strategy to stripe allocations across all attached VDevs, inherently balancing the I/O load. Crucially, the 64-bit block pointers returned by the pool encode both the target VDev identifier (in the upper 16 bits) and the local block number (in the lower 48 bits). This encoding allows upper layers of the file system (such as dnodes and dirents) to reference data globally without needing to understand the underlying physical disk topology. When a new VDev is added via \verb+add_vdev+, its capacity is immediately available for new allocations across all datasets in the pool.
+As demonstrated in Listing~\ref{lst:zpool}, the \verb+ZPool+ class abstracts the physical boundaries of individual drives. The \verb+alloc_block+ method employs a round-robin strategy to stripe allocations across all attached VDevs, inherently balancing the I/O load. Crucially, the 64-bit block pointers returned by the pool encode both the target VDev identifier (in the upper 16 bits) and the local block number (in the lower 48 bits), done by the \verb+encode_block+ helper. This encoding allows upper layers of the file system (such as dnodes and dirents) to reference data globally without needing to understand the underlying physical disk topology. When a new VDev is added via \verb+add_vdev+, its capacity is immediately available for new allocations across all datasets in the pool.
 \subsection{Mounting and Path Resolution}
 
 Before any high-level feature can operate, the file system must be able to translate human-readable paths (e.g., \verb+/home/user/doc.txt+) into physical block addresses.

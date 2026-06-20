@@ -26,6 +26,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 set(CORE_SOURCES
     src/vdev.cpp
     src/allocator.cpp
+    src/zpool.cpp
     src/zfs.cpp
     src/sha256.cpp
 )
@@ -48,4 +49,4 @@ add_executable(test_vdev tests/test_vdev.cpp src/vdev.cpp)
 add_executable(test_allocator tests/test_allocator.cpp src/allocator.cpp src/vdev.cpp)
 
 # Evaluation Script
-add_executable(eval_zfs tests/eval.cpp src/zfs.cpp src/allocator.cpp src/vdev.cpp src/sha256.cpp)
+add_executable(eval_zfs tests/eval.cpp ${CORE_SOURCES})
