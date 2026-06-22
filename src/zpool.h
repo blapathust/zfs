@@ -30,13 +30,13 @@ public:
     // Returns true if all VDevs opened successfully
     bool is_open() const;
 
-    // --- Block I/O (uses global block IDs) ---
+    //Block I/O (uses global block IDs) ---
 
     bool read_block(uint64_t global_blk, void* buffer);
     bool write_block(uint64_t global_blk, const void* buffer);
     void sync();
 
-    // --- Allocator operations (routed to per-VDev allocators) ---
+    //Allocator operations (routed to per-VDev allocators) ---
 
     // Initialize all allocators (called during format)
     bool init_allocators();
@@ -56,7 +56,7 @@ public:
     // Decrement reference count for a global block
     void dec_ref(uint64_t global_blk);
 
-    // --- Stats ---
+    //Stats ---
 
     // Get aggregated total and free block counts across all VDevs
     void get_stats(uint64_t* total, uint64_t* free) const;
@@ -67,7 +67,7 @@ public:
     // Get number of VDevs in the pool
     size_t get_vdev_count() const;
 
-    // --- Global/Local block encoding ---
+    //Global/Local block encoding ---
 
     static uint64_t encode_block(uint16_t vdev_idx, uint64_t local_blk);
     static void decode_block(uint64_t global_blk, uint16_t& vdev_idx, uint64_t& local_blk);

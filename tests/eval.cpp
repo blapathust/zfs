@@ -26,9 +26,9 @@ int main() {
     ZFS zfs(IMG);
     zfs.mount();
 
-    // ---------------------------------------------------------------
+    
     // 1. Create files
-    // ---------------------------------------------------------------
+    
     std::cout << "\n1. Creating files..." << std::endl;
     int rc = zfs.create("/hello.txt", 0644);
     check(rc == 0, "create /hello.txt");
@@ -40,9 +40,9 @@ int main() {
     rc = zfs.create("/hello.txt", 0644);
     check(rc != 0, "duplicate /hello.txt rejected");
 
-    // ---------------------------------------------------------------
+    
     // 2. Write & read (single block)
-    // ---------------------------------------------------------------
+    
     std::cout << "\n2. Single-block write & read..." << std::endl;
     {
         char wbuf[VDEV_BLOCK_SIZE];
@@ -56,9 +56,9 @@ int main() {
         check(rbuf[0] == 'A' && rbuf[4095] == 'A', "data integrity");
     }
 
-    // ---------------------------------------------------------------
+    
     // 3. Multi-block write & read (>4 KB)
-    // ---------------------------------------------------------------
+    
     std::cout << "\n3. Multi-block write & read (20 KB)..." << std::endl;
     {
         const size_t SZ = 20 * 1024; // 5 blocks
@@ -74,9 +74,9 @@ int main() {
         check(memcmp(wbuf, rbuf, SZ) == 0, "multi-block data matches");
     }
 
-    // ---------------------------------------------------------------
+    
     // 4. mkdir / readdir
-    // ---------------------------------------------------------------
+    
     std::cout << "\n4. mkdir / readdir..." << std::endl;
     rc = zfs.mkdir("/subdir", 0755);
     check(rc == 0, "mkdir /subdir");
@@ -87,9 +87,9 @@ int main() {
     rc = zfs.create("/subdir/nested.txt", 0644);
     check(rc == 0, "create /subdir/nested.txt");
 
-    // ---------------------------------------------------------------
+    
     // 5. Snapshots
-    // ---------------------------------------------------------------
+    
     std::cout << "\n5. Snapshots..." << std::endl;
     rc = zfs.take_snapshot();
     check(rc == 0, "take snapshot");
@@ -121,9 +121,9 @@ int main() {
         check(rc == VDEV_BLOCK_SIZE && rbuf[0] == 'A', "restored data is 'A'");
     }
 
-    // ---------------------------------------------------------------
+    
     // 5.5 Indirect Blocks (Large File)
-    // ---------------------------------------------------------------
+    
     std::cout << "\n5.5 Indirect Blocks (Large File)..." << std::endl;
     {
         rc = zfs.create("/large.bin", 0644);
@@ -164,9 +164,9 @@ int main() {
         delete[] rbuf;
     }
 
-    // ---------------------------------------------------------------
+    
     // 5.6 Directory Overflow Handling
-    // ---------------------------------------------------------------
+    
     std::cout << "\n5.6 Directory Overflow..." << std::endl;
     {
         rc = zfs.mkdir("/manyfiles", 0755);
@@ -213,9 +213,9 @@ int main() {
         check(has_file_19, "file_19 is still present (swapped successfully)");
     }
 
-    // ---------------------------------------------------------------
+    
     // 6. unlink / rmdir
-    // ---------------------------------------------------------------
+    
     std::cout << "\n6. unlink / rmdir..." << std::endl;
 
     // unlink a file inside /subdir first
@@ -232,9 +232,9 @@ int main() {
     rc = zfs.rmdir("/subdir");
     check(rc == 0, "rmdir /subdir (now empty)");
 
-    // ---------------------------------------------------------------
+    
     // 6.5 Phase 7: Rename, Permissions, Snapshot GC
-    // ---------------------------------------------------------------
+    
     std::cout << "\n6.5 Phase 7: Rename, Permissions, GC..." << std::endl;
     {
         // 1. Rename (Cross-directory)
@@ -279,9 +279,9 @@ int main() {
         check(snaps.empty(), "snapshot list is now empty (GC freed blocks)");
     }
 
-    // ---------------------------------------------------------------
+    
     // 7. truncate
-    // ---------------------------------------------------------------
+    
     std::cout << "\n7. truncate..." << std::endl;
     {
         struct stat st;
@@ -295,9 +295,9 @@ int main() {
         check(st.st_size == 100, "size is now 100");
     }
 
-    // ---------------------------------------------------------------
+    
     // 8. Merkle integrity (corruption detection)
-    // ---------------------------------------------------------------
+    
     std::cout << "\n8. Corruption detection..." << std::endl;
     {
         // Write known data
@@ -331,9 +331,9 @@ int main() {
         check(rc < 0, "corrupted read rejected (hash mismatch)");
     }
 
-    // ---------------------------------------------------------------
+    
     // 9. CoW throughput benchmark
-    // ---------------------------------------------------------------
+    
     std::cout << "\n9. CoW throughput benchmark (100 writes)..." << std::endl;
     {
         // Re-create a fresh file (old one is corrupted)
@@ -353,9 +353,9 @@ int main() {
         std::cout << "   IOPS:       " << (int)(100.0 / secs) << std::endl;
     }
 
-    // ---------------------------------------------------------------
+    
     // 10. Multi-VDev Pooled Storage
-    // ---------------------------------------------------------------
+    
     std::cout << "\n10. Multi-VDev Pooled Storage (2 devices)..." << std::endl;
     {
         const std::string IMG_A = "test_pool_a.img";

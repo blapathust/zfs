@@ -1,7 +1,7 @@
 #include "zpool.h"
 #include <iostream>
 
-// --- Encoding helpers ---
+//Encoding helpers
 
 uint64_t ZPool::encode_block(uint16_t vdev_idx, uint64_t local_blk) {
     return ((uint64_t)vdev_idx << 48) | (local_blk & 0x0000FFFFFFFFFFFFULL);
@@ -12,7 +12,7 @@ void ZPool::decode_block(uint64_t global_blk, uint16_t& vdev_idx, uint64_t& loca
     local_blk = global_blk & 0x0000FFFFFFFFFFFFULL;
 }
 
-// --- Constructor / Destructor ---
+//Constructor / Destructor
 
 ZPool::ZPool() : next_vdev_idx(0), opened(false) {}
 
@@ -20,7 +20,7 @@ ZPool::~ZPool() {
     // unique_ptrs handle cleanup
 }
 
-// --- Pool construction ---
+//Pool construction
 
 void ZPool::add_vdev(const std::string& img_path, uint64_t size_bytes) {
     PoolMember pm;
@@ -64,7 +64,7 @@ bool ZPool::is_open() const {
     return opened;
 }
 
-// --- Block I/O ---
+//Block I/O
 
 bool ZPool::read_block(uint64_t global_blk, void* buffer) {
     uint16_t vdev_idx;
@@ -94,7 +94,7 @@ void ZPool::sync() {
     }
 }
 
-// --- Allocator operations ---
+//Allocator operations
 
 bool ZPool::init_allocators() {
     for (auto& pm : members) {
@@ -153,7 +153,7 @@ void ZPool::dec_ref(uint64_t global_blk) {
     }
 }
 
-// --- Stats ---
+//Stats ---
 
 void ZPool::get_stats(uint64_t* total, uint64_t* free) const {
     uint64_t t = 0, f = 0;
