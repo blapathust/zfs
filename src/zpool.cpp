@@ -1,7 +1,6 @@
 #include "zpool.h"
 #include <iostream>
 
-//Encoding helpers
 
 uint64_t ZPool::encode_block(uint16_t vdev_idx, uint64_t local_blk) {
     return ((uint64_t)vdev_idx << 48) | (local_blk & 0x0000FFFFFFFFFFFFULL);
@@ -12,20 +11,18 @@ void ZPool::decode_block(uint64_t global_blk, uint16_t& vdev_idx, uint64_t& loca
     local_blk = global_blk & 0x0000FFFFFFFFFFFFULL;
 }
 
-//Constructor / Destructor
 
 ZPool::ZPool() : next_vdev_idx(0), opened(false) {}
 
 ZPool::~ZPool() {
-    // unique_ptrs handle cleanup
+    vdevs.clear();
 }
 
-//Pool construction
 
 void ZPool::add_vdev(const std::string& img_path, uint64_t size_bytes) {
     PoolMember pm;
     pm.vdev = std::make_unique<VDev>(img_path);
-    pm.alloc = nullptr; // Created during format/open
+    pm.alloc = nullptr;
     pm.img_path = img_path;
     pm.size_bytes = size_bytes;
     members.push_back(std::move(pm));
@@ -64,7 +61,6 @@ bool ZPool::is_open() const {
     return opened;
 }
 
-//Block I/O
 
 bool ZPool::read_block(uint64_t global_blk, void* buffer) {
     uint16_t vdev_idx;
@@ -94,7 +90,6 @@ void ZPool::sync() {
     }
 }
 
-//Allocator operations
 
 bool ZPool::init_allocators() {
     for (auto& pm : members) {
@@ -123,7 +118,7 @@ bool ZPool::save_allocators() {
 uint64_t ZPool::alloc_block() {
     if (members.empty()) return 0;
 
-    // Round-robin across VDevs to stripe allocations
+
     for (size_t attempt = 0; attempt < members.size(); ++attempt) {
         size_t idx = (next_vdev_idx + attempt) % members.size();
         uint64_t local_blk = members[idx].alloc->alloc_block();
@@ -132,7 +127,7 @@ uint64_t ZPool::alloc_block() {
             return encode_block((uint16_t)idx, local_blk);
         }
     }
-    return 0; // All VDevs are full
+    return 0;
 }
 
 void ZPool::inc_ref(uint64_t global_blk) {
@@ -153,7 +148,6 @@ void ZPool::dec_ref(uint64_t global_blk) {
     }
 }
 
-//Stats ---
 
 void ZPool::get_stats(uint64_t* total, uint64_t* free) const {
     uint64_t t = 0, f = 0;

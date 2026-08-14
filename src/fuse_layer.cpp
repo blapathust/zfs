@@ -35,7 +35,7 @@ static int zfsl_getattr(const char *path, zfsl_stat_t *stbuf) {
     int res = zfs->getattr(path, &st);
     if (res == 0) {
         memset(stbuf, 0, sizeof(zfsl_stat_t));
-        stbuf->st_mode = st.st_mode | 0777; // Ensure full permissions
+        stbuf->st_mode = st.st_mode | 0777;
         stbuf->st_nlink = st.st_nlink;
         stbuf->st_size = st.st_size;
         
@@ -155,7 +155,7 @@ static int zfsl_statfs(const char *path, zfsl_statvfs_t *stbuf) {
     zfs->get_space_info(&total_blocks, &free_blocks);
 
     memset(stbuf, 0, sizeof(zfsl_statvfs_t));
-    stbuf->f_bsize = 4096; // VDEV_BLOCK_SIZE
+    stbuf->f_bsize = 4096;
     stbuf->f_frsize = 4096;
     stbuf->f_blocks = total_blocks;
     stbuf->f_bfree = free_blocks;
@@ -196,13 +196,13 @@ int main(int argc, char *argv[]) {
     const char* img_path = argv[1];
     zfs = new ZFS(img_path);
     
-    // Mount the virtual device
+
     if (!zfs->mount()) {
         fprintf(stderr, "Failed to mount ZFS virtual device.\n");
         return 1;
     }
 
-    // Rewrite args to pass to FUSE
+
     char** fuse_argv = new char*[argc - 1];
     fuse_argv[0] = argv[0];
     for (int i = 2; i < argc; ++i) {

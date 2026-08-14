@@ -10,17 +10,14 @@ int main() {
 
     VDev vdev(test_img);
 
-    // Test Format
     std::cout << "Testing format..." << std::endl;
-    bool res = vdev.format(1024 * 1024); // 1 MB
+    bool res = vdev.format(1024 * 1024);
     assert(res == true);
 
-    // Test Open
     std::cout << "Testing open..." << std::endl;
     res = vdev.open();
     assert(res == true);
 
-    // Test Write & Read Block
     std::cout << "Testing write and read block..." << std::endl;
     char write_buf[VDEV_BLOCK_SIZE];
     memset(write_buf, 'Z', VDEV_BLOCK_SIZE);

@@ -7,7 +7,7 @@
 
 BlockAllocator::BlockAllocator(VDev* vdev, uint64_t total_blocks) 
     : vdev(vdev), total_blocks(total_blocks) {
-    uint64_t total_bytes = total_blocks; // 1 byte per block
+    uint64_t total_bytes = total_blocks;
     bitmap_blocks = (total_bytes + VDEV_BLOCK_SIZE - 1) / VDEV_BLOCK_SIZE;
     
     refcounts.resize(bitmap_blocks * VDEV_BLOCK_SIZE, 0);
@@ -20,8 +20,7 @@ BlockAllocator::~BlockAllocator() {
 bool BlockAllocator::init_empty() {
     std::fill(refcounts.begin(), refcounts.end(), 0);
     
-    // Reserve Block 0 (Uberblock) and Bitmap blocks
-    inc_ref(0); // Uberblock
+    inc_ref(0);
     for (uint32_t i = 1; i <= bitmap_blocks; ++i) {
         inc_ref(i);
     }
@@ -48,7 +47,6 @@ bool BlockAllocator::save() {
 }
 
 uint64_t BlockAllocator::alloc_block() {
-    // Start searching from first data block (after uberblock + bitmap)
     uint64_t first_data = 1 + bitmap_blocks;
     for (uint64_t i = first_data; i < total_blocks; ++i) {
         if (get_ref(i) == 0) {
@@ -56,7 +54,7 @@ uint64_t BlockAllocator::alloc_block() {
             return i;
         }
     }
-    return 0; // Out of space
+    return 0;
 }
 
 void BlockAllocator::inc_ref(uint64_t blk_no) {

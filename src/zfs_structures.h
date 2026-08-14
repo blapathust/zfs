@@ -14,7 +14,7 @@
 
 struct zfsl_blkptr {
     uint64_t blk_no;
-    uint8_t hash[32]; // SHA-256
+    uint8_t hash[32];
 };
 
 struct zfsl_snapshot {
@@ -25,8 +25,8 @@ struct zfsl_snapshot {
 
 struct zfsl_uberblock {
     uint64_t magic;
-    uint64_t txg;      // Transaction group ID
-    uint64_t root_blk; // Pointer to the root directory dnode block
+    uint64_t txg;
+    uint64_t root_blk;
     uint8_t root_hash[32];
     uint32_t snapshot_count;
     zfsl_snapshot snapshots[ZFSL_MAX_SNAPSHOTS];
@@ -34,18 +34,18 @@ struct zfsl_uberblock {
 
 struct zfsl_dnode {
     uint32_t type;     // ZFSL_DNODE_FILE or ZFSL_DNODE_DIR
-    uint64_t size;     // Size in bytes (file data or total dirent bytes)
-    uint64_t mtime;    // Last modification time (Unix timestamp)
-    uint64_t ctime;    // Creation time
-    uint64_t atime;    // Last access time
-    uint32_t uid;      // User ID
-    uint32_t gid;      // Group ID
-    uint32_t mode;     // Permissions
+    uint64_t size;     // file data or total dirent bytes
+    uint64_t mtime;
+    uint64_t ctime;
+    uint64_t atime;
+    uint32_t uid;
+    uint32_t gid;
+    uint32_t mode;
     zfsl_blkptr direct[ZFSL_DIRECT_BLKS];
     zfsl_blkptr indirect;
 };
 
-// Represents a directory entry (256 bytes each, 16 per 4KB block)
+// 256 bytes each, 16 per 4KB block
 struct zfsl_dirent {
     uint64_t dnode_blk;
     char name[248];

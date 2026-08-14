@@ -8,14 +8,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// ---------- helpers ----------
 
 static void check(bool ok, const char *msg) {
     std::cout << "   " << (ok ? "[PASS]" : "[FAIL]") << " " << msg << std::endl;
     if (!ok) std::cerr << "   *** FAILURE: " << msg << " ***" << std::endl;
 }
 
-// ---------- main ----------
 
 int main() {
     const std::string IMG = "test_eval.img";
@@ -27,7 +25,6 @@ int main() {
     zfs.mount();
 
     
-    // 1. Create files
     
     std::cout << "\n1. Creating files..." << std::endl;
     int rc = zfs.create("/hello.txt", 0644);
@@ -36,12 +33,10 @@ int main() {
     rc = zfs.create("/world.txt", 0644);
     check(rc == 0, "create /world.txt");
 
-    // Duplicate check
     rc = zfs.create("/hello.txt", 0644);
     check(rc != 0, "duplicate /hello.txt rejected");
 
     
-    // 2. Write & read (single block)
     
     std::cout << "\n2. Single-block write & read..." << std::endl;
     {
@@ -57,7 +52,6 @@ int main() {
     }
 
     
-    // 3. Multi-block write & read (>4 KB)
     
     std::cout << "\n3. Multi-block write & read (20 KB)..." << std::endl;
     {
@@ -75,7 +69,6 @@ int main() {
     }
 
     
-    // 4. mkdir / readdir
     
     std::cout << "\n4. mkdir / readdir..." << std::endl;
     rc = zfs.mkdir("/subdir", 0755);
@@ -88,7 +81,6 @@ int main() {
     check(rc == 0, "create /subdir/nested.txt");
 
     
-    // 5. Snapshots
     
     std::cout << "\n5. Snapshots..." << std::endl;
     rc = zfs.take_snapshot();
@@ -100,7 +92,6 @@ int main() {
     uint64_t snap_txg = snaps[0];
     std::cout << "   Snapshot txg = " << snap_txg << std::endl;
 
-    // Overwrite /hello.txt with different data
     {
         char wbuf[VDEV_BLOCK_SIZE];
         memset(wbuf, 'Z', VDEV_BLOCK_SIZE);
@@ -111,7 +102,6 @@ int main() {
         check(rbuf[0] == 'Z', "post-snapshot write is 'Z'");
     }
 
-    // Restore snapshot
     rc = zfs.restore_snapshot(snap_txg);
     check(rc == 0, "restore snapshot");
 
@@ -122,7 +112,6 @@ int main() {
     }
 
     
-    // 5.5 Indirect Blocks (Large File)
     
     std::cout << "\n5.5 Indirect Blocks (Large File)..." << std::endl;
     {
@@ -165,7 +154,6 @@ int main() {
     }
 
     
-    // 5.6 Directory Overflow Handling
     
     std::cout << "\n5.6 Directory Overflow..." << std::endl;
     {
@@ -214,15 +202,12 @@ int main() {
     }
 
     
-    // 6. unlink / rmdir
     
     std::cout << "\n6. unlink / rmdir..." << std::endl;
 
-    // unlink a file inside /subdir first
     rc = zfs.unlink("/subdir/nested.txt");
     check(rc == 0, "unlink /subdir/nested.txt");
 
-    // Verify it's gone
     {
         zfsl_dnode dn;
         uint64_t blk = zfs.resolve_path_public("/subdir/nested.txt", &dn);
@@ -233,7 +218,6 @@ int main() {
     check(rc == 0, "rmdir /subdir (now empty)");
 
     
-    // 6.5 Phase 7: Rename, Permissions, Snapshot GC
     
     std::cout << "\n6.5 Phase 7: Rename, Permissions, GC..." << std::endl;
     {
@@ -280,7 +264,6 @@ int main() {
     }
 
     
-    // 7. truncate
     
     std::cout << "\n7. truncate..." << std::endl;
     {
@@ -296,7 +279,6 @@ int main() {
     }
 
     
-    // 8. Merkle integrity (corruption detection)
     
     std::cout << "\n8. Corruption detection..." << std::endl;
     {
@@ -332,7 +314,6 @@ int main() {
     }
 
     
-    // 9. CoW throughput benchmark
     
     std::cout << "\n9. CoW throughput benchmark (100 writes)..." << std::endl;
     {
@@ -354,7 +335,6 @@ int main() {
     }
 
     
-    // 10. Multi-VDev Pooled Storage
     
     std::cout << "\n10. Multi-VDev Pooled Storage (2 devices)..." << std::endl;
     {

@@ -18,56 +18,36 @@ public:
     ZPool();
     ~ZPool();
 
-    // Add a VDev to the pool (call before format/open)
     void add_vdev(const std::string& img_path, uint64_t size_bytes);
 
-    // Format all VDevs (creates fresh image files)
     bool format();
 
-    // Open all VDevs (expects image files to already exist)
     bool open();
 
-    // Returns true if all VDevs opened successfully
     bool is_open() const;
-
-    //Block I/O (uses global block IDs) ---
 
     bool read_block(uint64_t global_blk, void* buffer);
     bool write_block(uint64_t global_blk, const void* buffer);
     void sync();
 
-    //Allocator operations (routed to per-VDev allocators) ---
-
-    // Initialize all allocators (called during format)
     bool init_allocators();
 
-    // Load all allocators from their respective VDevs
     bool load_allocators();
 
-    // Save all allocators to their respective VDevs
     bool save_allocators();
 
-    // Allocate a free block using round-robin striping. Returns global block ID, or 0 on failure.
+    // Returns global block ID, or 0 on failure.
     uint64_t alloc_block();
 
-    // Increment reference count for a global block
     void inc_ref(uint64_t global_blk);
 
-    // Decrement reference count for a global block
     void dec_ref(uint64_t global_blk);
 
-    //Stats ---
-
-    // Get aggregated total and free block counts across all VDevs
     void get_stats(uint64_t* total, uint64_t* free) const;
 
-    // Get total blocks across all VDevs
     uint64_t get_total_blocks() const;
 
-    // Get number of VDevs in the pool
     size_t get_vdev_count() const;
-
-    //Global/Local block encoding ---
 
     static uint64_t encode_block(uint16_t vdev_idx, uint64_t local_blk);
     static void decode_block(uint64_t global_blk, uint16_t& vdev_idx, uint64_t& local_blk);
